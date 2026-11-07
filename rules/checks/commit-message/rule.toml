@@ -1,0 +1,13 @@
+id = "commit-message"
+description = "Validate Conventional Commit headers"
+enabled = true
+blocking = true
+
+[parameters.scopes_file]
+type = "file"
+required = true
+description = "Repository-specific list of allowed commit scopes"
+
+[check]
+entrypoint = "index.sh"
+interpreter = "sh"

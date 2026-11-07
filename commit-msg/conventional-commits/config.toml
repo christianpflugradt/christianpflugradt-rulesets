@@ -1,0 +1,4 @@
+id = "conventional-commits"
+description = "Validate Conventional Commit headers"
+run_at = ["commit-msg"]
+rules = ["rules/checks/commit-message"]
