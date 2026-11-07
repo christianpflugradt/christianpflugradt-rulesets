@@ -30,6 +30,9 @@ def target_path(dest, raw):
 
 
 def populate_worktree(dest):
+    index = command("git", "ls-files", "--stage", "-z")
+    if any(entry.startswith(b"160000 ") for entry in index.split(b"\0")):
+        raise RuntimeError("Git submodules are outside snapshot coverage")
     raw = command("git", "ls-files", "-z", "--cached", "--others", "--exclude-standard")
     for rel in sorted(set(raw.split(b"\0")) - {b""}):
         source = Path(os.fsdecode(rel))

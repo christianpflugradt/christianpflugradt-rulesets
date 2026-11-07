@@ -131,6 +131,7 @@ class SecurityTests(unittest.TestCase):
         head = self.git("rev-parse", "HEAD").stdout.strip()
         self.git("update-index", "--add", "--cacheinfo", f"160000,{head},module")
         self.git("commit", "--quiet", "-m", "test: add gitlink")
+        self.rule(expected=2)  # An uninitialized submodule also blocks coverage.
         (self.repo / "module").mkdir()
         for point in ("check", "pre-push"):
             self.rule(point=point, expected=2)
