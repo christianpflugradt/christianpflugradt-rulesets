@@ -1,0 +1,4 @@
+id = "repository-conventions"
+description = "Require repository conventions at check and pre-push"
+run_at = ["pre-push", "check"]
+rules = ["rules/checks/license"]

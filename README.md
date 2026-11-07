@@ -79,12 +79,15 @@ the import and install the managed pre-push hook, then run
 `hannes mach was --at check` to inspect the working tree explicitly.
 See [scanner configuration and limitations](README-gitleaks.md).
 
-## License
+## Repository conventions
 
-The `multi-point/license` set runs the blocking `license` check at `check` and
-`pre-push`. It compares the target file byte-for-byte with the regular,
+The `repository-conventions` set currently includes only the blocking `license`
+check. The existing `multi-point/license` set remains available and reuses the
+same Rule. Both sets run it at `check` and `pre-push`. It compares the target file byte-for-byte with the regular,
 nonhidden files in `rules/checks/license/licenses/`. The included references are
-Apache-2.0 and PolyForm-Noncommercial-1.0.0. Add or remove reference files to
+Apache-2.0, PolyForm-Noncommercial-1.0.0 and Unlicense, downloaded unchanged
+from [SPDX license-list-data](https://github.com/spdx/license-list-data/tree/31846481de7ea17d92f2f46fad76abe58b2e9bb0/text)
+at commit `31846481de7ea17d92f2f46fad76abe58b2e9bb0`. Add or remove reference files to
 change the allowlist. Whitespace, line endings and copyright notices must match.
 
 Requirements: Python 3.9+ and Git. The check uses the shared entrypoint
@@ -94,7 +97,7 @@ check entrypoints.
 ```toml
 [[imports]]
 git = "https://github.com/christianpflugradt/christianpflugradt-rulesets.git"
-path = "multi-point/license"
+path = "repository-conventions"
 ref = "main"
 
 [imports.rule_parameters.license]
