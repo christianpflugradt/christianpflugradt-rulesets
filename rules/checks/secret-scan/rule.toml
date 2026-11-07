@@ -1,0 +1,9 @@
+id = "secret-scan"
+description = "Detect secrets in the current repository snapshot using Gitleaks"
+enabled = true
+blocking = true
+
+[check]
+entrypoint = "index.sh"
+interpreter = "sh"
+timeout_seconds = 120

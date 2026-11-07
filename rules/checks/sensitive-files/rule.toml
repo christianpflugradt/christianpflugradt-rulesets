@@ -1,0 +1,9 @@
+id = "sensitive-files"
+description = "Reject environment and Terraform state files in the current snapshot"
+enabled = true
+blocking = true
+
+[check]
+entrypoint = "index.sh"
+interpreter = "sh"
+timeout_seconds = 30

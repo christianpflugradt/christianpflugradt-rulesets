@@ -48,12 +48,44 @@ Rules live independently under `rules/checks/` and `rules/reviews/`. Sets refer
 to their directories relative to this repository root; several sets may reuse
 the same Rule. Resources stay together with the Rule's `rule.toml`.
 
+## Security
+
+The `multi-point/security` set runs two blocking checks at `check` and `pre-push`:
+
+- `sensitive-files` rejects `.env` and `.env.*` filenames, except `.env.example`,
+  `.env.sample` and `.env.template`, and files ending in `.tfstate` or containing
+  `.tfstate.`. Matching is case-sensitive and applies in every directory.
+- `secret-scan` scans file contents with Gitleaks.
+
+`check` examines tracked and nonignored untracked working-tree files, including
+unstaged edits. Deleted files are excluded; ignored files are included only when
+tracked. `pre-push` examines the current `HEAD` tree, independent of working-tree
+or index changes. Neither point scans Git history. `pre-push` does not inspect
+other refs being pushed or consume Git's pre-push input.
+
+Requirements: POSIX `sh`, Python 3.9+, Git and Gitleaks v8 supporting `gitleaks dir`
+(tested with 8.30.1). Install these tools explicitly before running checks.
+Hannes and these rules install no dependencies.
+
+```toml
+[[imports]]
+git = "https://github.com/christianpflugradt/christianpflugradt-rulesets.git"
+path = "multi-point/security"
+ref = "main"
+```
+
+Pin a full commit hash for reproducible imports. Run `hannes pass auf` to resolve
+the import and install the managed pre-push hook, then run
+`hannes mach was --at check` to inspect the working tree explicitly.
+See [scanner configuration and limitations](README-gitleaks.md).
+
 ## Validation
 
 Run the script tests with Python 3:
 
 ```sh
 python3 tests/test_commit_message.py
+python3 -m unittest discover -s tests -v
 ```
 
 To also test imports and real managed Git hooks in temporary repositories, supply
@@ -63,4 +95,8 @@ an absolute path to a compatible Hannes binary:
 python3 tests/test_commit_message.py --hannes /path/to/hannes
 ```
 
-The tests use local Git repositories and never call a review provider.
+The tests use local Git repositories and never call a review provider. Security
+integration tests use `hannes` and `gitleaks` from PATH when available, otherwise
+those cases are reported as skipped. `HANNES_EXECUTABLE` and
+`GITLEAKS_EXECUTABLE` can select absolute tool paths. Run with both tools to verify
+real scanner behavior, external imports, reports and managed pre-push enforcement.
