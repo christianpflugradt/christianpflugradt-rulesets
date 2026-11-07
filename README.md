@@ -79,6 +79,40 @@ the import and install the managed pre-push hook, then run
 `hannes mach was --at check` to inspect the working tree explicitly.
 See [scanner configuration and limitations](README-gitleaks.md).
 
+## License
+
+The `multi-point/license` set runs the blocking `license` check at `check` and
+`pre-push`. It compares the target file byte-for-byte with the regular,
+nonhidden files in `rules/checks/license/licenses/`. The included references are
+Apache-2.0 and PolyForm-Noncommercial-1.0.0. Add or remove reference files to
+change the allowlist. Whitespace, line endings and copyright notices must match.
+
+Requirements: Python 3.9+ and Git. The check uses the shared entrypoint
+`scripts/file-reference.py`; this requires Hannes support for source-relative
+check entrypoints.
+
+```toml
+[[imports]]
+git = "https://github.com/christianpflugradt/christianpflugradt-rulesets.git"
+path = "multi-point/license"
+ref = "main"
+
+[imports.rule_parameters.license]
+target = "LICENSE"
+```
+
+`target` is a required string containing a repository-relative path without
+parent traversal. `check` reads the working-tree file; `pre-push` reads that path
+from the current `HEAD`, independently of working-tree changes. Neither point
+scans history or every pushed commit. A match returns PASS (0); a missing or
+nonmatching target returns FAIL (1); configuration or execution errors return
+ERROR (2).
+
+Pin a full commit hash for reproducible imports. Run `hannes pass auf` to resolve
+the import and install the managed pre-push hook. Exact matching enforces the
+chosen reference texts; it does not identify licenses or assess their legal
+suitability.
+
 ## Validation
 
 Run the script tests with Python 3:
