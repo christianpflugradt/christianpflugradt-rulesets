@@ -2,8 +2,7 @@ id = "license"
 description = "Require a license matching an approved reference byte-for-byte"
 
 [check]
-entrypoint = "scripts/file-reference.py"
-interpreter = "python3"
+command = "python3 @source/scripts/file-reference.py"
 
 [parameters.target]
 type = "string"

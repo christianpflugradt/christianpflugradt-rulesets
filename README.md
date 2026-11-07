@@ -1,8 +1,32 @@
 # Hannes rule sets
 
 Reusable checks and reviews for [Hannes](https://github.com/christianpflugradt/hannes).
-Requires a Hannes release supporting repository-relative external Rule references.
-Older releases with directory-local Rule references cannot load this layout.
+Requires published Hannes v0.14.0 or later for string commands with explicit
+path references. Commands run in the consuming repository root: `@rule/` selects
+the declaring Rule directory and `@source/` selects this Git repository's root,
+including when imported through Hannes' immutable cache. No shell evaluation is
+added; the three existing shell scripts still run through `sh`, and the shared
+license script still runs through `python3`.
+
+## Compatibility and migration
+
+Consumers using older compatible governors must pin the last legacy revision
+`a88f3569f841f4674c8d515fd275db8d6dde5d8c` before refreshing a `main` import.
+Existing full-commit pins remain unchanged and usable. Upgrade the consuming
+repository's published governor to v0.14.0 or later before changing its import
+pin to a migrated revision, then run `hannes pass auf` to refresh the cache.
+Do not merely refresh `main` under an older governor: v0.13.0 parses string
+commands but does not resolve `@rule/` or `@source/` references.
+
+Hannes is the only consumer found in the available local checkouts. Its
+commit-message and security imports were pinned to legacy revisions, while its
+repository-conventions import followed `main`. To keep that consumer compatible,
+the migrated revision is published on a staging branch first; Hannes upgrades its
+governor and pins all three imports to that revision before this repository's
+`main` advances. Other consumers are not enumerated by this repository; follow the
+same governor-first upgrade or retain the legacy commit pin.
+
+Older releases with directory-local Rule references cannot load either layout.
 
 ## Conventional commit headers
 
@@ -90,9 +114,10 @@ from [SPDX license-list-data](https://github.com/spdx/license-list-data/tree/318
 at commit `31846481de7ea17d92f2f46fad76abe58b2e9bb0`. Add or remove reference files to
 change the allowlist. Whitespace, line endings and copyright notices must match.
 
-Requirements: Python 3.9+ and Git. The check uses the shared entrypoint
-`scripts/file-reference.py`; this requires Hannes support for source-relative
-check entrypoints.
+Requirements: Python 3.9+ and Git. The command
+`python3 @source/scripts/file-reference.py` runs the shared script from this
+repository root, while `HANNES_RULE_DIRECTORY` still locates the Rule's license
+references.
 
 ```toml
 [[imports]]

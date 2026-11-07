@@ -4,6 +4,5 @@ enabled = true
 blocking = true
 
 [check]
-entrypoint = "index.sh"
-interpreter = "sh"
+command = "sh @rule/index.sh"
 timeout_seconds = 120
