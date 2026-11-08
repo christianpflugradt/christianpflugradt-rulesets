@@ -1,6 +1,6 @@
 # Please Behave rule sets
 
-Reusable checks and reviews for [Please Behave](https://github.com/please-behave/cli).
+Personal checks and reviews maintained by Christian Pflugradt for [Please Behave](https://github.com/please-behave/cli).
 Requires published Please Behave v0.1.0 or later for string commands with explicit
 path references. Commands run in the consuming repository root: `@rule/` selects
 the declaring Rule directory and `@source/` selects this Git repository's root,
@@ -36,7 +36,7 @@ Add this import to the consuming project's `.please/config.toml`:
 
 ```toml
 [[imports]]
-git = "https://github.com/christianpflugradt/christianpflugradt-rulesets.git"
+git = "https://github.com/christianpflugradt/please-behave-rulesets.git"
 path = "commit-msg/conventional-commits"
 ref = "main"
 
@@ -82,7 +82,7 @@ Please Behave and these rules install no dependencies.
 
 ```toml
 [[imports]]
-git = "https://github.com/christianpflugradt/christianpflugradt-rulesets.git"
+git = "https://github.com/christianpflugradt/please-behave-rulesets.git"
 path = "multi-point/security"
 ref = "main"
 ```
@@ -110,7 +110,7 @@ references.
 
 ```toml
 [[imports]]
-git = "https://github.com/christianpflugradt/christianpflugradt-rulesets.git"
+git = "https://github.com/christianpflugradt/please-behave-rulesets.git"
 path = "repository-conventions"
 ref = "main"
 
