@@ -13,11 +13,11 @@ def error(message):
 
 
 def main():
-    rule_value = os.environ.get("HANNES_RULE_DIRECTORY")
-    target = os.environ.get("HANNES_PARAM_TARGET")
-    point = os.environ.get("HANNES_EXECUTION_POINT", "check")
+    rule_value = os.environ.get("PLEASE_RULE_DIRECTORY")
+    target = os.environ.get("PLEASE_PARAM_TARGET")
+    point = os.environ.get("PLEASE_EXECUTION_POINT", "check")
     if not rule_value or not target:
-        return error("HANNES_RULE_DIRECTORY and HANNES_PARAM_TARGET are required")
+        return error("PLEASE_RULE_DIRECTORY and PLEASE_PARAM_TARGET are required")
     relative = Path(target)
     if relative.is_absolute() or not relative.parts or ".." in relative.parts:
         return error("target must be a repository-relative path without traversal")

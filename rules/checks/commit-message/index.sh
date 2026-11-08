@@ -8,7 +8,7 @@
 #   2 = ERROR
 #
 # Usage:
-#   Invoked by Hannes at commit-msg; the message path is HANNES_GIT_HOOK_ARG_1.
+#   Invoked by Please Behave at commit-msg; the message path is PLEASE_GIT_HOOK_ARG_1.
 
 set -u
 
@@ -30,13 +30,13 @@ TYPES_FILE="$SCRIPT_DIR/commit-types.txt"
 [ -f "$TYPES_FILE" ] \
     || error "Missing commit types file: $TYPES_FILE"
 
-[ "${HANNES_GIT_HOOK:-}" = "commit-msg" ] \
+[ "${PLEASE_GIT_HOOK:-}" = "commit-msg" ] \
     || error "Expected the commit-msg hook context"
 
-[ "${HANNES_GIT_HOOK_ARG_COUNT:-}" = "1" ] \
+[ "${PLEASE_GIT_HOOK_ARG_COUNT:-}" = "1" ] \
     || error "Expected exactly one commit-msg hook argument"
 
-MESSAGE_FILE=${HANNES_GIT_HOOK_ARG_1:-}
+MESSAGE_FILE=${PLEASE_GIT_HOOK_ARG_1:-}
 [ -n "$MESSAGE_FILE" ] || error "Missing commit-message file argument"
 
 [ -f "$MESSAGE_FILE" ] \
@@ -45,10 +45,10 @@ MESSAGE_FILE=${HANNES_GIT_HOOK_ARG_1:-}
 [ -r "$MESSAGE_FILE" ] \
     || error "Cannot read commit-message file: $MESSAGE_FILE"
 
-[ -n "${HANNES_PARAM_SCOPES_FILE:-}" ] \
+[ -n "${PLEASE_PARAM_SCOPES_FILE:-}" ] \
     || error "Required parameter 'scopes_file' is missing"
 
-SCOPES_FILE=$HANNES_PARAM_SCOPES_FILE
+SCOPES_FILE=$PLEASE_PARAM_SCOPES_FILE
 
 [ -f "$SCOPES_FILE" ] \
     || error "Scopes file does not exist: $SCOPES_FILE"

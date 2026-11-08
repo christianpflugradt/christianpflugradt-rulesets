@@ -1,4 +1,4 @@
-"""Validate the check and optionally its Hannes managed-hook integration."""
+"""Validate the check and optionally its Please Behave managed-hook integration."""
 from pathlib import Path
 import argparse
 import json
@@ -21,9 +21,9 @@ def script_tests(root):
     message = root / "commit message.txt"
     scopes = root / "allowed scopes.txt"
     scopes.write_text("cli\nconfig\ndocs\n")
-    env = {k: v for k, v in os.environ.items() if not k.startswith("HANNES_")}
-    env.update(HANNES_GIT_HOOK="commit-msg", HANNES_GIT_HOOK_ARG_COUNT="1",
-               HANNES_GIT_HOOK_ARG_1=str(message), HANNES_PARAM_SCOPES_FILE=str(scopes))
+    env = {k: v for k, v in os.environ.items() if not k.startswith("PLEASE_")}
+    env.update(PLEASE_GIT_HOOK="commit-msg", PLEASE_GIT_HOOK_ARG_COUNT="1",
+               PLEASE_GIT_HOOK_ARG_1=str(message), PLEASE_PARAM_SCOPES_FILE=str(scopes))
     accepted = [f"{kind}: describe the change" for kind in (RULE / "commit-types.txt").read_text().splitlines()]
     accepted += ["feat(cli)!: change behavior", "fix!: change behavior", "docs: explain\n\nDetails."]
     rejected = ["", "\nfeat: hidden", "feat:", "feat: ", "feat: \t", "feat:no space",
@@ -34,11 +34,11 @@ def script_tests(root):
             message.write_text(text)
             run(["sh", str(RULE / "index.sh")], env=env, expected=code)
     message.write_text("feat(cli): add command\n")
-    for key in ["HANNES_GIT_HOOK", "HANNES_GIT_HOOK_ARG_COUNT", "HANNES_GIT_HOOK_ARG_1", "HANNES_PARAM_SCOPES_FILE"]:
+    for key in ["PLEASE_GIT_HOOK", "PLEASE_GIT_HOOK_ARG_COUNT", "PLEASE_GIT_HOOK_ARG_1", "PLEASE_PARAM_SCOPES_FILE"]:
         invalid = dict(env)
         invalid.pop(key)
         run(["sh", str(RULE / "index.sh")], env=invalid, expected=2)
-    for key in ["HANNES_GIT_HOOK_ARG_1", "HANNES_PARAM_SCOPES_FILE"]:
+    for key in ["PLEASE_GIT_HOOK_ARG_1", "PLEASE_PARAM_SCOPES_FILE"]:
         run(["sh", str(RULE / "index.sh")], env=dict(env, **{key: str(root / "missing")}), expected=2)
     # A scanner/tool failure must not masquerade as a policy violation.
     tools = root / "tools"
@@ -57,11 +57,11 @@ def integration(root, executable):
     consumer.mkdir()
     shutil.copytree(ROOT / "rules", source / "rules")
     shutil.copytree(ROOT / "commit-msg", source / "commit-msg")
-    env = {k: v for k, v in os.environ.items() if not k.startswith("HANNES_")}
+    env = {k: v for k, v in os.environ.items() if not k.startswith("PLEASE_")}
     env.update(XDG_CACHE_HOME=str(root / "cache"), NO_COLOR="1")
     binaries = root / "bin"
     binaries.mkdir()
-    (binaries / "hannes").symlink_to(executable)
+    (binaries / "please").symlink_to(executable)
     env["PATH"] = str(binaries) + os.pathsep + env["PATH"]
     def git(path, *args, expected=0):
         return run(["git", "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
@@ -70,13 +70,13 @@ def integration(root, executable):
         git(repository, "init", "--quiet", "--initial-branch=main")
     git(source, "add", ".")
     git(source, "commit", "--quiet", "-m", "feat: add rule set")
-    (consumer / ".hannes").mkdir()
+    (consumer / ".please").mkdir()
     (consumer / ".commit-scopes").write_text("cli\n")
-    (consumer / ".hannes/config.toml").write_text(
+    (consumer / ".please/config.toml").write_text(
         f'project = "My_App"\n[[imports]]\ngit = {json.dumps(str(source))}\n'
         'path = "commit-msg/conventional-commits"\nref = "main"\n'
         '[imports.rule_parameters.commit-message]\nscopes_file = ".commit-scopes"\n')
-    run([str(executable), "pass", "auf", "--auto-approve"], cwd=consumer, env=env)
+    run([str(executable), "sync", "--yes"], cwd=consumer, env=env)
     # Hook execution must reuse the cache after the source becomes unavailable.
     source.rename(root / "offline-source")
     git(consumer, "add", ".")
@@ -85,7 +85,7 @@ def integration(root, executable):
     for message in ["unknown: reject commit", "fix(other): reject scope"]:
         git(consumer, "commit", "--allow-empty", "-m", message, expected=1)
         assert git(consumer, "rev-parse", "HEAD").stdout.strip() == head
-    report = json.loads((consumer / ".hannes/reports/last.json").read_text())
+    report = json.loads((consumer / ".please/reports/last.json").read_text())
     assert report["overall"] == "FAIL"
     assert len(report["results"]) == 1
     assert report["results"][0]["id"].endswith(":commit-message")
@@ -94,13 +94,13 @@ def integration(root, executable):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--hannes", type=Path)
+    parser.add_argument("--please", type=Path)
     args = parser.parse_args()
     with tempfile.TemporaryDirectory(prefix="ruleset-tests-") as directory:
         root = Path(directory)
         script_tests(root)
-        if args.hannes:
-            integration(root, args.hannes.resolve(strict=True))
+        if args.please:
+            integration(root, args.please.resolve(strict=True))
 
 
 if __name__ == "__main__":

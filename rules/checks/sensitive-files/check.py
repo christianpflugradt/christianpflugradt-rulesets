@@ -20,7 +20,7 @@ def command(*args):
 
 
 def main():
-    point = os.environ.get("HANNES_EXECUTION_POINT")
+    point = os.environ.get("PLEASE_EXECUTION_POINT")
     if point == "check":
         raw = command("git", "ls-files", "-z", "--cached", "--others", "--exclude-standard")
         paths = {os.fsdecode(path) for path in raw.split(b"\0") if path and os.path.lexists(os.fsdecode(path))}

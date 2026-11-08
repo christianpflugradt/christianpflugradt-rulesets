@@ -79,14 +79,14 @@ def findings_from(report, status):
 
 
 def main():
-    point = os.environ.get("HANNES_EXECUTION_POINT")
+    point = os.environ.get("PLEASE_EXECUTION_POINT")
     if point not in ("check", "pre-push"):
         raise RuntimeError(f"unsupported execution point: {point!r}")
     scanner = shutil.which("gitleaks")
     if scanner is None:
         raise RuntimeError("gitleaks is not installed or is not on PATH")
     scanner = str(Path(scanner).resolve())
-    with tempfile.TemporaryDirectory(prefix="hannes-secret-scan-") as temp:
+    with tempfile.TemporaryDirectory(prefix="please-secret-scan-") as temp:
         base = Path(temp)
         snapshot = base / "snapshot"
         snapshot.mkdir()

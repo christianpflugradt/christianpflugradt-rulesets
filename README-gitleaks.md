@@ -22,7 +22,7 @@ inconsistent scanner results cannot produce PASS. Internally, Gitleaks receives
 a dedicated findings exit code to distinguish detections from tool errors.
 Findings show escaped filenames and rule IDs, without secret values or matching
 lines. Raw tool output is suppressed because it may contain sensitive data.
-Hannes enforces the check's configured timeout.
+Please Behave enforces the check's configured timeout.
 
 These checks are complementary: a secret-free `.env` still violates the filename
 policy, while a secret in an ordinary source file can fail the content scan.

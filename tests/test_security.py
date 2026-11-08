@@ -1,4 +1,4 @@
-"""Snapshot, error and optional real-tool/Hannes integration tests."""
+"""Snapshot, error and optional real-tool/Please Behave integration tests."""
 import json
 import os
 from pathlib import Path
@@ -9,7 +9,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-HANNES = os.environ.get("HANNES_EXECUTABLE") or shutil.which("hannes")
+PLEASE = os.environ.get("PLEASE_EXECUTABLE") or shutil.which("please")
 GITLEAKS = os.environ.get("GITLEAKS_EXECUTABLE") or shutil.which("gitleaks")
 TOKEN = "gh" + "p_" + "0123456789abcdef" * 2 + "ABCD"
 
@@ -23,7 +23,7 @@ class SecurityTests(unittest.TestCase):
         self.repo.mkdir()
         self.bin = self.base / "bin"
         self.bin.mkdir()
-        self.env = {k: v for k, v in os.environ.items() if not k.startswith("HANNES_")}
+        self.env = {k: v for k, v in os.environ.items() if not k.startswith("PLEASE_")}
         self.env.update(PATH=str(self.bin) + os.pathsep + self.env["PATH"],
                         XDG_CACHE_HOME=str(self.base / "cache"), NO_COLOR="1")
         self.git("init", "--quiet", "--initial-branch=main")
@@ -63,7 +63,7 @@ class SecurityTests(unittest.TestCase):
     def rule(self, rule="secret-scan", point="check", expected=0, **extra):
         directory = ROOT / "rules/checks" / rule
         return self.run_command(["sh", str(directory / "index.sh")], expected,
-            dict(self.env, HANNES_RULE_DIRECTORY=str(directory), HANNES_EXECUTION_POINT=point, **extra))
+            dict(self.env, PLEASE_RULE_DIRECTORY=str(directory), PLEASE_EXECUTION_POINT=point, **extra))
 
     def snapshot(self):
         return json.loads((self.base / "snapshot.json").read_text())
@@ -142,7 +142,7 @@ class SecurityTests(unittest.TestCase):
         self.env["PATH"] = str(self.bin)
         directory = ROOT / "rules/checks/secret-scan"
         self.run_command(["/bin/sh", str(directory / "index.sh")], 2,
-            dict(self.env, HANNES_RULE_DIRECTORY=str(directory), HANNES_EXECUTION_POINT="check"))
+            dict(self.env, PLEASE_RULE_DIRECTORY=str(directory), PLEASE_EXECUTION_POINT="check"))
 
     def test_reports_and_scanner_failures_cannot_pass(self):
         cases = [(1, "[]"), (2, "[]"), (10, "[]"), (0, None), (0, ""),
@@ -183,7 +183,7 @@ class SecurityTests(unittest.TestCase):
             self.rule(name, "unsupported", 2)
             directory = ROOT / "rules/checks" / name
             self.run_command(["sh", str(directory / "index.sh")], 2)
-            env = dict(self.env, PATH=str(self.bin), HANNES_RULE_DIRECTORY=str(directory), HANNES_EXECUTION_POINT="check")
+            env = dict(self.env, PATH=str(self.bin), PLEASE_RULE_DIRECTORY=str(directory), PLEASE_EXECUTION_POINT="check")
             self.run_command(["/bin/sh", str(directory / "index.sh")], 2, env)
             (self.bin / "python3").symlink_to(sys.executable)
             self.run_command(["/bin/sh", str(directory / "index.sh")], 2, env)
@@ -219,8 +219,8 @@ class SecurityTests(unittest.TestCase):
         (self.repo / ".gitleaks.toml").unlink()
         self.rule(GITLEAKS_CONFIG="/missing/config", GITLEAKS_CONFIG_TOML="invalid = [")
 
-    @unittest.skipUnless(HANNES, "published Hannes not on PATH")
-    def test_hannes_import_reports_and_real_pre_push_hook(self):
+    @unittest.skipUnless(PLEASE, "published Please Behave not on PATH")
+    def test_please_import_reports_and_real_pre_push_hook(self):
         source = self.base / "source"
         source.mkdir()
         shutil.copytree(ROOT / "rules", source / "rules")
@@ -229,19 +229,19 @@ class SecurityTests(unittest.TestCase):
         subprocess.run(["git", "-C", str(source), "add", "."], check=True)
         subprocess.run(["git", "-C", str(source), "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
                         "-c", "commit.gpgsign=false", "commit", "--quiet", "-m", "feat: add security"], check=True)
-        self.write(".hannes/config.toml", f'project = "My_App"\n[[imports]]\ngit = {json.dumps(str(source))}\npath = "multi-point/security"\nref = "main"\n')
-        (self.bin / "hannes").symlink_to(Path(HANNES).resolve())
-        self.run_command([HANNES, "pass", "auf", "--auto-approve"])
+        self.write(".please/config.toml", f'project = "My_App"\n[[imports]]\ngit = {json.dumps(str(source))}\npath = "multi-point/security"\nref = "main"\n')
+        (self.bin / "please").symlink_to(Path(PLEASE).resolve())
+        self.run_command([PLEASE, "sync", "--yes"])
         source.rename(self.base / "offline-source")
         for point in ("check", "pre-push"):
-            result = self.run_command([HANNES, "mach", "was", "--at", point, "--plan", "--json"])
+            result = self.run_command([PLEASE, "run", "--at", point, "--plan", "--json"])
             plan = json.loads(result.stdout)
             self.assertEqual({r["origin"]["external"]["path"] for r in plan["scheduled"]}, {"multi-point/security"})
             self.assertEqual(len(plan["scheduled"]), 2)
-            self.run_command([HANNES, "mach", "was", "--at", point])
+            self.run_command([PLEASE, "run", "--at", point])
         self.write(".env", "blocked")
-        self.run_command([HANNES, "mach", "was", "--at", "check"], 1)
-        report = json.loads((self.repo / ".hannes/reports/last.json").read_text())
+        self.run_command([PLEASE, "run", "--at", "check"], 1)
+        report = json.loads((self.repo / ".please/reports/last.json").read_text())
         self.assertEqual(report["overall"], "FAIL")
         self.assertEqual(len(report["results"]), 2)
         self.rule("sensitive-files", "pre-push")
@@ -252,8 +252,8 @@ class SecurityTests(unittest.TestCase):
         self.commit()
         self.run_command(["git", "push", "--quiet", "origin", "main"], 1)
         self.fake(1, "[]")
-        self.run_command([HANNES, "mach", "was", "--at", "check"], 2)
-        report = json.loads((self.repo / ".hannes/reports/last.json").read_text())
+        self.run_command([PLEASE, "run", "--at", "check"], 2)
+        report = json.loads((self.repo / ".please/reports/last.json").read_text())
         self.assertEqual(report["overall"], "ERROR")
         self.assertEqual({item["status"] for item in report["results"]}, {"FAIL", "ERROR"})
 
