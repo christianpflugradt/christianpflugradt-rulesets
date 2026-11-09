@@ -12,6 +12,12 @@ import tempfile
 LEAK_EXIT = 10
 
 
+# Imported rule resources must remain immutable.
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
+from snapshot import select_snapshot
+
+
 def command(*args):
     result = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode:
@@ -80,8 +86,7 @@ def findings_from(report, status):
 
 def main():
     point = os.environ.get("PLEASE_EXECUTION_POINT")
-    if point not in ("check", "pre-push"):
-        raise RuntimeError(f"unsupported execution point: {point!r}")
+    selected = select_snapshot()
     scanner = shutil.which("gitleaks")
     if scanner is None:
         raise RuntimeError("gitleaks is not installed or is not on PATH")
@@ -91,7 +96,7 @@ def main():
         snapshot = base / "snapshot"
         snapshot.mkdir()
         report = base / "report.json"
-        if point == "check":
+        if selected == "worktree":
             populate_worktree(snapshot)
         else:
             populate_commit(snapshot)

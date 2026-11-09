@@ -1,0 +1,9 @@
+id = "release-readiness"
+description = "Verify trusted CI and source security before release"
+run_at = ["release-readiness"]
+rules = [
+  "rules/checks/github-ci-success",
+  "rules/checks/sensitive-files",
+  "rules/checks/secret-scan",
+  "rules/checks/license",
+]

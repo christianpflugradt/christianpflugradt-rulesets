@@ -130,6 +130,89 @@ the import and install the managed pre-push hook. Exact matching enforces the
 chosen reference texts; it does not identify licenses or assess their legal
 suitability.
 
+## Release readiness
+
+`release/readiness` selects `github-ci-success`, `sensitive-files`, `secret-scan`
+and `license` at the consumer-declared `release-readiness` execution point.
+It uses the existing Please Behave parameter and import support; no CLI extension
+is required. Rust builds, application smoke tests and packaging stay in consumers.
+
+```toml
+[execution_points]
+custom = ["release-readiness"]
+
+[[imports]]
+git = "https://github.com/christianpflugradt/please-behave-rulesets.git"
+path = "release/readiness"
+ref = "<FULL_REVIEWED_COMMIT_SHA>"
+
+[imports.rule_parameters.github-ci-success]
+policy = ".please/release-ci.json"
+
+[imports.rule_parameters.sensitive-files]
+snapshot = "head"
+
+[imports.rule_parameters.secret-scan]
+snapshot = "head"
+
+[imports.rule_parameters.license]
+snapshot = "head"
+target = "LICENSE"
+```
+
+The security and license rules now accept optional `snapshot = "head"` or
+`"worktree"`. Existing `check` and `pre-push` defaults are unchanged; a conflicting
+explicit selection is ERROR. Custom points require an explicit snapshot.
+`head` reads committed blobs, independent of index/worktree changes; neither
+selection scans history. Technical failures never establish PASS.
+
+The CI policy file has this exact schema (no step configuration):
+
+```json
+{
+  "schema_version": 1,
+  "repository": "please-behave/cli",
+  "workflow": ".github/workflows/ci.yml",
+  "event": "push",
+  "branch": "main",
+  "required_jobs": ["Check"]
+}
+```
+
+List every required matrix entry by its unique, exact GitHub job name. This
+personal rule supports GitHub.com push workflows in the `please-behave` organization
+and `christianpflugradt` account. It requires Python 3.9+, Git, `GITHUB_TOKEN`
+with `actions: read` and `contents: read`, and the standard `GITHUB_SHA`,
+`GITHUB_REPOSITORY`, `GITHUB_REPOSITORY_ID`, `GITHUB_RUN_ID` and
+`GITHUB_WORKFLOW_REF` release context. The checkout must equal `GITHUB_SHA`.
+
+The rule resolves repository/workflow IDs and checks source/head repository,
+workflow path, exact SHA, branch and event. It chooses the newest matching run
+without filtering for success. Missing, pending, failed or cancelled runs block;
+an older green run cannot substitute. The selected run must be completed and
+successful. For partial reruns, attempt-specific job lists are read newest first;
+the newest execution of each required job wins. Successful jobs retained from an
+earlier attempt of that same run count. A later failure/skip overrides an earlier
+success. Unrelated runs never combine. Ambiguous job names, incomplete API pages,
+changed evidence or identity mismatches are ERROR. The run is reread and newest-run
+selection repeated before PASS. No individual steps are inspected.
+
+GitHub's completed run and per-attempt job records are the evidence boundary:
+this trusts the reviewed workflow/configuration at the source commit, rather than
+proving its commands independently. Evidence is a point-in-time API observation,
+not a signed attestation or an atomic lock against future reruns. The current
+release run/workflow cannot certify itself; CI must not wait on release readiness.
+The rule never dispatches CI or polls for its completion. Retry the release after
+CI succeeds. API/authentication/network/JSON failures are ERROR, with raw diagnostics
+suppressed. Authentication redirects and non-GitHub API hosts are rejected.
+To keep evidence bounded, more than 100 attempts or 1000+ entries in an API listing are
+unsupported and fail closed. Stable, unique job names
+are required across attempts; dynamic names that hide a rerun's identity cannot
+be validated reliably.
+
+References: [workflow runs](https://docs.github.com/en/rest/actions/workflow-runs),
+[attempt jobs](https://docs.github.com/en/rest/actions/workflow-jobs).
+
 ## Validation
 
 Run the script tests with Python 3:

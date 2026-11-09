@@ -7,3 +7,7 @@ command = "python3 @source/scripts/file-reference.py"
 [parameters.target]
 type = "string"
 required = true
+
+[parameters.snapshot]
+type = "string"
+description = "Explicit head or worktree snapshot at custom execution points"

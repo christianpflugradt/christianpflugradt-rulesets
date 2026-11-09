@@ -1,8 +1,14 @@
 """Reject sensitive filenames without reading their contents."""
 import os
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 import subprocess
 import sys
+
+
+# Imported rule resources must remain immutable.
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
+from snapshot import select_snapshot
 
 
 def prohibited(path):
@@ -21,10 +27,11 @@ def command(*args):
 
 def main():
     point = os.environ.get("PLEASE_EXECUTION_POINT")
-    if point == "check":
+    selected = select_snapshot()
+    if selected == "worktree":
         raw = command("git", "ls-files", "-z", "--cached", "--others", "--exclude-standard")
         paths = {os.fsdecode(path) for path in raw.split(b"\0") if path and os.path.lexists(os.fsdecode(path))}
-    elif point == "pre-push":
+    elif selected == "head":
         raw = command("git", "ls-tree", "-rz", "--name-only", "HEAD")
         paths = {os.fsdecode(path) for path in raw.split(b"\0") if path}
     else:

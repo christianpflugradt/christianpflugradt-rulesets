@@ -81,6 +81,17 @@ class LicenseTests(unittest.TestCase):
         self.rule(expected=1)
         self.rule("pre-push")
 
+    def test_custom_snapshots_preserve_builtin_semantics(self):
+        shutil.copyfile(RULE / "licenses/Unlicense.txt", self.repo / "LICENSE")
+        self.commit()
+        (self.repo / "LICENSE").write_text("uncommitted invalid license")
+        self.rule("release-readiness", PLEASE_PARAM_SNAPSHOT="head")
+        self.rule("release-readiness", 1, PLEASE_PARAM_SNAPSHOT="worktree")
+        self.rule("release-readiness", 2)
+        self.rule("release-readiness", 2, PLEASE_PARAM_SNAPSHOT="invalid")
+        self.rule("check", 2, PLEASE_PARAM_SNAPSHOT="head")
+        self.rule("pre-push", 2, PLEASE_PARAM_SNAPSHOT="worktree")
+
     def test_nonregular_consumer_files_fail(self):
         (self.repo / "LICENSE").symlink_to(RULE / "licenses/Unlicense.txt")
         self.commit()

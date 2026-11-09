@@ -178,6 +178,43 @@ class SecurityTests(unittest.TestCase):
         self.git("add", "-f", ".env.local")
         self.rule("sensitive-files", expected=1)
 
+    def test_custom_points_require_explicit_compatible_snapshots(self):
+        self.write(".env", "uncommitted")
+        self.write("safe.txt", "worktree")
+        for name in ("secret-scan", "sensitive-files"):
+            self.rule(name, "release-readiness", 2)
+            self.rule(name, "release-readiness", 2, PLEASE_PARAM_SNAPSHOT="invalid")
+            self.rule(name, "check", 2, PLEASE_PARAM_SNAPSHOT="head")
+            self.rule(name, "pre-push", 2, PLEASE_PARAM_SNAPSHOT="worktree")
+            self.rule(name, "release-readiness", PLEASE_PARAM_SNAPSHOT="head")
+        self.assertEqual(self.snapshot()["safe.txt"], "safe contents\n")
+        self.rule(point="release-readiness", PLEASE_PARAM_SNAPSHOT="worktree")
+        self.assertEqual(self.snapshot()["safe.txt"], "worktree")
+        self.rule("sensitive-files", "release-readiness", 1, PLEASE_PARAM_SNAPSHOT="worktree")
+
+    @unittest.skipUnless(PLEASE, "published Please Behave not on PATH")
+    def test_readiness_set_imports_all_four_rules_without_changing_existing_sets(self):
+        source = self.base / "release-source"
+        source.mkdir()
+        for directory in ("rules", "scripts", "release"):
+            shutil.copytree(ROOT / directory, source / directory, ignore=shutil.ignore_patterns("__pycache__"))
+        subprocess.run(["git", "init", "--quiet", str(source)], check=True)
+        subprocess.run(["git", "-C", str(source), "add", "."], check=True)
+        subprocess.run(["git", "-C", str(source), "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                        "-c", "commit.gpgsign=false", "commit", "--quiet", "-m", "test: release rules"], check=True)
+        self.write("policy.json", "{}")
+        self.write(".please/config.toml", 'project = "Release fixture"\n[execution_points]\ncustom = ["release-readiness"]\n'
+                   + f'[[imports]]\ngit = {json.dumps(str(source))}\npath = "release/readiness"\nref = "HEAD"\n'
+                   + '[imports.rule_parameters.github-ci-success]\npolicy = "policy.json"\n'
+                   + '[imports.rule_parameters.secret-scan]\nsnapshot = "head"\n'
+                   + '[imports.rule_parameters.sensitive-files]\nsnapshot = "head"\n'
+                   + '[imports.rule_parameters.license]\nsnapshot = "head"\ntarget = "LICENSE"\n')
+        self.run_command([PLEASE, "sync", "--yes"])
+        plan = json.loads(self.run_command([PLEASE, "run", "--at", "release-readiness", "--checks-only", "--plan", "--json"]).stdout)
+        self.assertEqual({r["id"].rsplit(":", 1)[-1] for r in plan["scheduled"]},
+                         {"github-ci-success", "secret-scan", "sensitive-files", "license"})
+        self.assertTrue(all(r["blocking"] for r in plan["scheduled"]))
+
     def test_missing_context_git_and_python_are_errors(self):
         for name in ("sensitive-files", "secret-scan"):
             self.rule(name, "unsupported", 2)
@@ -225,6 +262,7 @@ class SecurityTests(unittest.TestCase):
         source.mkdir()
         shutil.copytree(ROOT / "rules", source / "rules")
         shutil.copytree(ROOT / "multi-point", source / "multi-point")
+        shutil.copytree(ROOT / "scripts", source / "scripts", ignore=shutil.ignore_patterns("__pycache__"))
         subprocess.run(["git", "init", "--quiet", "--initial-branch=main", str(source)], check=True)
         subprocess.run(["git", "-C", str(source), "add", "."], check=True)
         subprocess.run(["git", "-C", str(source), "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
