@@ -1,0 +1,9 @@
+# Copy to .please/providers/gemini-flash-lite.toml in each consumer.
+# Install adapters/gemini.py as .please/adapters/gemini-flash-lite.py from the same reviewed pin.
+command = "python3"
+args = [".please/adapters/gemini-flash-lite.py"]
+timeout_seconds = 30
+
+[requirements]
+executables = ["python3"]
+env = ["GEMINI_API_KEY"]

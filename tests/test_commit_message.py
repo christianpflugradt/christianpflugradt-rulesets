@@ -58,7 +58,8 @@ def integration(root, executable):
     shutil.copytree(ROOT / "rules", source / "rules")
     shutil.copytree(ROOT / "commit-msg", source / "commit-msg")
     env = {k: v for k, v in os.environ.items() if not k.startswith("PLEASE_")}
-    env.update(XDG_CACHE_HOME=str(root / "cache"), NO_COLOR="1")
+    env.update(XDG_CACHE_HOME=str(root / "cache"), NO_COLOR="1", GEMINI_API_KEY="synthetic-key",
+               GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1", PYTHONDONTWRITEBYTECODE="1")
     binaries = root / "bin"
     binaries.mkdir()
     (binaries / "please").symlink_to(executable)
@@ -76,20 +77,76 @@ def integration(root, executable):
         f'project = "My_App"\n[[imports]]\ngit = {json.dumps(str(source))}\n'
         'path = "commit-msg/conventional-commits"\nref = "main"\n'
         '[imports.rule_parameters.commit-message]\nscopes_file = ".commit-scopes"\n')
+    (consumer / ".please/providers").mkdir()
+    (consumer / ".please/adapters").mkdir()
+    shutil.copyfile(ROOT / "adapters/gemini.py", consumer / ".please/adapters/gemini-flash-lite.py")
+    provider = (ROOT / "providers/gemini-flash-lite.toml").read_text().replace(
+        'args = [".please/adapters/gemini-flash-lite.py"]', 'args = [".git/fake-gemini.py"]')
+    (consumer / ".please/providers/gemini-flash-lite.toml").write_text(provider)
+    (consumer / ".git/fake-gemini.py").write_text(r'''import importlib.util, json, os, pathlib, sys
+from unittest.mock import MagicMock, patch
+spec = importlib.util.spec_from_file_location('gemini', '.please/adapters/gemini-flash-lite.py')
+gemini = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(gemini)
+request = json.load(sys.stdin)
+assert request['head'] is None
+assert request['input']['manifest'] == []
+assert request['input']['excerpts'] == []
+assert request['input']['diff'] == ''
+assert 'BODY MUST NEVER REACH' not in json.dumps(request)
+assert all(r['input'] == 'commit-header' and r['parameters']['model'] == 'gemini-3.5-flash-lite' for r in request['reviews'])
+mode = os.environ.get('COMMIT_REVIEW_TEST_MODE', 'PASS')
+finding = {'source': 'commit-header', 'path': None, 'line': 1, 'message': 'Header wording evaluated'}
+if mode == 'file-evidence':
+    finding = {'path': '.commit-scopes', 'line': 1, 'message': 'Wrong evidence source'}
+status = mode if mode in ('PASS', 'FAIL', 'ERROR') else 'PASS'
+verdict = {'reviews': [{'id': r['id'], 'status': status, 'reason': 'Header wording evaluated', 'findings': [] if status == 'ERROR' else [finding]} for r in request['reviews']]}
+envelope = {'candidates': [{'finishReason': 'MAX_TOKENS' if mode == 'truncated' else 'STOP', 'content': {'parts': [{'text': json.dumps(verdict)}]}}]}
+response = MagicMock()
+response.__enter__.return_value = response
+response.status = 200
+response.read.return_value = json.dumps(envelope).encode()
+class Opener:
+    def open(self, http_request, timeout):
+        assert '/models/gemini-3.5-flash-lite:generateContent' in http_request.full_url
+        payload = json.loads(http_request.data)
+        assert payload['contents'][0]['parts'][0]['text'] == request['prompt']
+        assert payload['generationConfig']['responseJsonSchema'] == request['response_schema']
+        with pathlib.Path('.git/provider-calls').open('a') as calls:
+            calls.write('mock HTTP request\n')
+        return response
+with patch.object(gemini, 'build_opener', return_value=Opener()):
+    print(json.dumps(gemini.review(request)))
+''')
     run([str(executable), "sync", "--yes"], cwd=consumer, env=env)
     # Hook execution must reuse the cache after the source becomes unavailable.
     source.rename(root / "offline-source")
     git(consumer, "add", ".")
-    git(consumer, "commit", "--quiet", "-m", "feat(cli): add command")
+    git(consumer, "commit", "--quiet", "-m", "feat(cli): add command", "-m", "BODY MUST NEVER REACH")
     head = git(consumer, "rev-parse", "HEAD").stdout.strip()
+    calls = consumer / ".git/provider-calls"
+    assert len(calls.read_text().splitlines()) == 1
     for message in ["unknown: reject commit", "fix(other): reject scope"]:
         git(consumer, "commit", "--allow-empty", "-m", message, expected=1)
         assert git(consumer, "rev-parse", "HEAD").stdout.strip() == head
     report = json.loads((consumer / ".please/reports/last.json").read_text())
     assert report["overall"] == "FAIL"
-    assert len(report["results"]) == 1
+    assert len(report["results"]) == 2
     assert report["results"][0]["id"].endswith(":commit-message")
-    print("Integration passed: imported shared Rule, offline hooks, accepted/rejected commits and report.")
+    assert report["results"][1]["status"] == "NOT_RUN"
+    assert len(calls.read_text().splitlines()) == 1  # Syntax failures make no HTTP request.
+    # Git normalizes nonzero commit-msg hook exits to 1; the report retains FAIL/ERROR.
+    for mode in ["FAIL", "ERROR", "file-evidence", "truncated"]:
+        env["COMMIT_REVIEW_TEST_MODE"] = mode
+        git(consumer, "commit", "--allow-empty", "-m", "fix: fix stuff", expected=1)
+        assert git(consumer, "rev-parse", "HEAD").stdout.strip() == head
+        report = json.loads((consumer / ".please/reports/last.json").read_text())
+        assert report["overall"] == ("FAIL" if mode == "FAIL" else "ERROR")
+    previous_calls = calls.read_text()
+    env.pop("GEMINI_API_KEY")
+    git(consumer, "commit", "--allow-empty", "-m", "fix: preserve focus", expected=1)
+    assert calls.read_text() == previous_calls
+    print("Integration passed: imported checks and header Review, mock Gemini HTTP, syntax gating, PASS/FAIL/ERROR, invalid evidence, missing credentials and unchanged HEAD after rejection.")
 
 
 def main():

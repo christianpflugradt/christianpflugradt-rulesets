@@ -1,4 +1,4 @@
 id = "conventional-commits"
-description = "Validate Conventional Commit headers"
+description = "Require Conventional Commit headers with specific imperative summaries"
 run_at = ["commit-msg"]
-rules = ["rules/checks/commit-message"]
+rules = ["rules/checks/commit-message", "rules/reviews/commit-message-quality"]

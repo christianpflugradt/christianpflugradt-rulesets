@@ -1,0 +1,12 @@
+id = "commit-message-quality"
+name = "Commit message quality"
+description = "Require a specific English imperative commit summary without inspecting the diff"
+blocking = true
+
+[review]
+input = "commit-header"
+provider = "gemini-flash-lite"
+prompt = "prompt.md"
+
+[review.parameters]
+model = "gemini-3.5-flash-lite"

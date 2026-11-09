@@ -1,8 +1,9 @@
 # Please Behave rule sets
 
 Personal checks and reviews maintained by Christian Pflugradt for [Please Behave](https://github.com/please-behave/cli).
-Requires published Please Behave v0.1.0 or later for string commands with explicit
-path references. Commands run in the consuming repository root: `@rule/` selects
+The commit-message set requires published Please Behave v0.4.0 or later for
+commit-header reviews. Other sets retain their v0.1.0 minimum for explicit path
+references. Commands run in the consuming repository root: `@rule/` selects
 the declaring Rule directory and `@source/` selects this Git repository's root,
 including when imported through Please Behave' immutable cache. No shell evaluation is
 added; the three existing shell scripts still run through `sh`, and the shared
@@ -13,14 +14,20 @@ license script still runs through `python3`.
 This revision uses the Please Behave `PLEASE_*` runtime environment and `.please/`
 configuration. Existing Hannes consumers must retain the last compatible full
 commit pin `86c1a09519de6e848e6f8a0110427ca8d136dd1c`. Historical pins remain usable.
-Install Please Behave v0.1.0 before updating imports to this revision, migrate the
-consumer configuration and run `please sync` to refresh the cache and hooks.
-Rules, parameters, execution points, timeouts and enforcement remain unchanged.
+For a runtime-only migration without wording reviews, published Please Behave
+v0.1.0+ and pin `4825ec7d61ea01bd40cef3a126f107ef924f1666` retain the former
+syntax-only set. Migrate the consumer to `.please/` and run `please sync`.
 
-## Conventional commit headers
+The current commit-message set adds a blocking Gemini wording Review.
+Before updating this import, install published
+Please Behave v0.4.0+, the adapter/provider files below, and local credentials.
+Security, license and release-readiness behavior is unchanged by this addition.
 
-The `commit-msg/conventional-commits` set validates commit headers at the
-`commit-msg` execution point. It accepts `<type>[optional scope][!]: <description>`
+## Commit headers and wording
+
+The `commit-msg/conventional-commits` set contains a deterministic syntax Check
+and a blocking wording Review at `commit-msg`. The Check accepts
+`<type>[optional scope][!]: <description>`
 with a nonblank description. Types come from
 `rules/checks/commit-message/commit-types.txt`; scopes, when present, must match
 an entry in the consuming project's scope file. Each file contains one exact,
@@ -44,6 +51,22 @@ ref = "main"
 scopes_file = ".commit-scopes"
 ```
 
+Install the shared adapter and named provider from the **same reviewed checkout
+and revision** as the import. Run from the consuming repository root:
+
+```sh
+RULESETS_CHECKOUT="/path/to/reviewed/please-behave-rulesets"
+mkdir -p .please/adapters .please/providers
+cp "$RULESETS_CHECKOUT/adapters/gemini.py" .please/adapters/gemini-flash-lite.py
+cp "$RULESETS_CHECKOUT/providers/gemini-flash-lite.toml" .please/providers/gemini-flash-lite.toml
+```
+
+These versioned consumer files are installation copies of one shared adapter and
+provider template, not repository-specific rules. Update them together with the
+import pin. `please sync` imports Rules and manages hooks; it does not install
+provider executables. Existing adapters with different deadlines or retry policies
+can remain separately configured.
+
 Create `.commit-scopes` at the consuming repository root, for example:
 
 ```text
@@ -52,10 +75,54 @@ config
 docs
 ```
 
-Run `please sync` and confirm the import and managed hook installation.
-The hook validates each subsequent commit message. Use a full commit hash instead
-of `main` to pin the imported content. A direct `please run --at commit-msg`
-invocation has no Git message argument and this check reports ERROR.
+The named provider requires Python 3.9+ and `GEMINI_API_KEY` in the environment of
+the Git process. Keep credentials outside version control. Run `please sync` and
+confirm the import and managed hook installation. It does not call Gemini.
+Use a reviewed full commit hash instead of `main` to pin imported content.
+
+On each commit or amend, the deterministic Check runs first. Syntax violations
+block without a model call. The Review then evaluates only the captured first
+line: English imperative wording and a specific action/target. Scope may provide
+context. No word-count threshold, issue number or exhaustive description is
+required. Routine dependency updates and recognizable reverts remain valid.
+
+| Header | Wording expectation |
+| --- | --- |
+| `fix(settings): preserve keyboard focus after navigation` | PASS |
+| `chore(deps): update dependencies` | PASS |
+| `fix: fix stuff` | FAIL |
+| `chore: do stuff` | FAIL |
+| `feat: add stuff` | FAIL |
+| `fix: fixed keyboard focus` | FAIL |
+
+These are prompt acceptance examples, not deterministic predictions of an LLM's
+judgment. The [prompt](rules/reviews/commit-message-quality/prompt.md) is the shared
+wording policy. The [Review](rules/reviews/commit-message-quality/rule.toml) pins
+`gemini-3.5-flash-lite` through adapter parameters; provider-level model defaults
+cannot override that pin. Google documents this stable model and structured-output
+support in the [model reference](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite).
+
+The [adapter](adapters/gemini.py) uses Python's standard library and one HTTPS
+`generateContent` request with the complete prepared prompt and supplied JSON
+Schema (`responseJsonSchema`). It has a 20-second HTTP timeout, a 2048-token output
+limit and no automatic retries or fallback model. The provider deadline is 30
+seconds for the whole process. Redirects are rejected so the key is never
+forwarded to another endpoint. Non-successful HTTP responses, blocked/truncated
+candidates, invalid/duplicate JSON and responses over 64 KiB produce ERROR.
+No raw API error text, credentials or prompts are printed. Authentication,
+network and availability failures block the commit; this gate requires network.
+
+Please Behave sends only the header as review evidence, without body, diff,
+source files or HEAD. Findings use `source: "commit-header"`, `path: null`,
+`line: 1`; the CLI validates IDs, evidence and header stability. It rejects file
+citations and incomplete verdicts. No comparison with the actual change occurs.
+These rules do not inspect commit ranges or PR titles. The Review runs only at
+`commit-msg`, not in CI `check`, pre-push or release readiness.
+
+A direct `please run --at commit-msg` or offline preview has no Git message
+argument and cannot run this set. Use a real Git commit/amend after setup, then
+`please status --details` for saved evidence. The captured header is stored in the
+local report; status does not review a later candidate message.
 
 Rules live independently under `rules/checks/` and `rules/reviews/`. Sets refer
 to their directories relative to this repository root; several sets may reuse
@@ -229,7 +296,12 @@ an absolute path to a compatible Please Behave binary:
 python3 tests/test_commit_message.py --please /path/to/please
 ```
 
-The tests use local Git repositories and never call a review provider. Security
+The tests use local Git repositories, mock Gemini HTTP and never call a live
+review provider. The explicit commit-message integration command requires the
+published v0.4.0+ executable and exercises the real imported Check/Review, managed
+hooks, syntax gating, header-only HTTP payload, PASS/FAIL/ERROR, invalid evidence,
+missing credentials and preserved HEAD after rejection. Unit tests cover schema
+forwarding, model selection, timeouts, redirects and invalid API envelopes. Security
 integration tests use `please` and `gitleaks` from PATH when available, otherwise
 those cases are reported as skipped. `PLEASE_EXECUTABLE` and
 `GITLEAKS_EXECUTABLE` can select absolute tool paths. Run with both tools to verify
