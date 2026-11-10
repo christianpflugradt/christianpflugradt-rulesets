@@ -17,6 +17,9 @@ spec.loader.exec_module(gemini)
 
 class GeminiTests(unittest.TestCase):
     def setUp(self):
+        sleep = patch.object(gemini.time, "sleep")
+        self.sleep = sleep.start()
+        self.addCleanup(sleep.stop)
         self.verdict = {"reviews": [{"id": "quality", "status": "PASS", "reason": "Specific imperative summary",
             "findings": [{"source": "commit-header", "path": None, "line": 1, "message": "The action and target are specific."}]}]}
         self.request = {"protocol_version": 1, "prompt": "Captured header only", "response_schema": {"type": "object"},
@@ -70,7 +73,7 @@ class GeminiTests(unittest.TestCase):
                 result = gemini.review(self.request)
             self.assertEqual(result["reviews"][0]["status"], "ERROR")
             self.assertNotIn("private", json.dumps(result))
-            self.assertEqual(opener.open.call_count, 1)
+            self.assertEqual(opener.open.call_count, 3 if error.code in gemini.RETRYABLE else 1)
         for error in (TimeoutError("private details"), URLError("private details")):
             opener = MagicMock()
             opener.open.side_effect = error
@@ -96,6 +99,19 @@ class GeminiTests(unittest.TestCase):
                 result = gemini.review(self.request)
                 self.assertEqual(result["reviews"][0]["status"], "ERROR")
                 self.assertEqual(result["reviews"][0]["findings"], [])
+
+    def test_transient_failure_recovers_with_short_backoff_and_no_extra_calls(self):
+        response = MagicMock()
+        response.status = 200
+        response.read.return_value = json.dumps(self.envelope()).encode()
+        response.__enter__.return_value = response
+        opener = MagicMock()
+        opener.open.side_effect = [HTTPError("https://example.invalid", 503, "private", {}, io.BytesIO()),
+                                   TimeoutError(), response]
+        with patch.dict(os.environ, GEMINI_API_KEY="synthetic-key"), patch.object(gemini, "build_opener", return_value=opener):
+            self.assertEqual(gemini.review(self.request), {"protocol_version": 1, **self.verdict})
+        self.assertEqual(opener.open.call_count, 3)
+        self.assertEqual([call.args for call in self.sleep.call_args_list], [(1,), (3,)])
 
     def test_invalid_requests_and_mixed_models_never_call_provider(self):
         invalid = []

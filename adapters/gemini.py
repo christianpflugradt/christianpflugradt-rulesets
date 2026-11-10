@@ -1,13 +1,19 @@
 """Translate the Please Behave v1 adapter protocol to Gemini structured JSON."""
+import errno
 import http.client
 import json
 import os
+import socket
+import ssl
 import sys
-from urllib.error import HTTPError
+import time
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 LIMIT = 65536
+DELAYS = (1, 3)
+RETRYABLE = (429, 500, 502, 503, 504)
 
 
 class ProviderError(ValueError):
@@ -65,19 +71,36 @@ def run(prompt, model, schema):
     request = Request(
         f"https://generativelanguage.googleapis.com/v1beta/models/{quote(model, safe='')}:generateContent",
         data=payload, headers={"Content-Type": "application/json", "x-goog-api-key": key}, method="POST")
-    try:
-        with build_opener(NoRedirect()).open(request, timeout=20) as response:
-            if not 200 <= response.status < 300:
-                raise ProviderError("Gemini returned an unsuccessful HTTP response.")
-            return unwrap(response.read(LIMIT + 1))
-    except HTTPError as error:
-        status = error.code
-        error.close()
-        raise ProviderError(f"Gemini returned HTTP {status}.") from None
-    except ProviderError:
-        raise
-    except (OSError, ValueError, http.client.HTTPException):
-        raise ProviderError("Gemini request failed; check connectivity, credentials and model availability.") from None
+    opener = build_opener(NoRedirect())
+    for attempt in range(3):
+        try:
+            with opener.open(request, timeout=20) as response:
+                if not 200 <= response.status < 300:
+                    raise ProviderError("Gemini returned an unsuccessful HTTP response.")
+                return unwrap(response.read(LIMIT + 1))
+        except HTTPError as error:
+            status = error.code
+            error.close()
+            if status not in RETRYABLE:
+                raise ProviderError(f"Gemini returned HTTP {status}.") from None
+            diagnostic = f"Gemini returned HTTP {status}"
+        except ProviderError:
+            raise
+        except (OSError, http.client.HTTPException) as error:
+            reason = error.reason if isinstance(error, URLError) else error
+            transient = not isinstance(reason, ssl.SSLError) and (
+                isinstance(reason, (TimeoutError, ConnectionError, http.client.RemoteDisconnected))
+                or isinstance(reason, socket.gaierror) and reason.errno == socket.EAI_AGAIN
+                or getattr(reason, "errno", None) in (errno.ECONNRESET, errno.ECONNREFUSED, errno.ENETUNREACH, errno.EHOSTUNREACH)
+            )
+            if not transient:
+                raise ProviderError("Gemini connection failed; no retry.") from None
+            diagnostic = "Gemini connection failed"
+        except ValueError:
+            raise ProviderError("Gemini request was invalid; no retry.") from None
+        if attempt == 2:
+            raise ProviderError(f"{diagnostic}; exhausted 3 attempts.")
+        time.sleep(DELAYS[attempt])
 
 
 def review(request):

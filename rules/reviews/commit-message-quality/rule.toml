@@ -1,7 +1,7 @@
 id = "commit-message-quality"
 name = "Commit message quality"
 description = "Require a specific English imperative commit summary without inspecting the diff"
-blocking = true
+blocking = false
 
 [review]
 input = "commit-header"

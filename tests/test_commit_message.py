@@ -77,15 +77,17 @@ def integration(root, executable):
         f'project = "My_App"\n[[imports]]\ngit = {json.dumps(str(source))}\n'
         'path = "commit-msg/conventional-commits"\nref = "main"\n'
         '[imports.rule_parameters.commit-message]\nscopes_file = ".commit-scopes"\n')
-    (consumer / ".please/providers").mkdir()
-    (consumer / ".please/adapters").mkdir()
-    shutil.copyfile(ROOT / "adapters/gemini.py", consumer / ".please/adapters/gemini-flash-lite.py")
-    provider = (ROOT / "providers/gemini-flash-lite.toml").read_text().replace(
-        'args = [".please/adapters/gemini-flash-lite.py"]', 'args = [".git/fake-gemini.py"]')
-    (consumer / ".please/providers/gemini-flash-lite.toml").write_text(provider)
-    (consumer / ".git/fake-gemini.py").write_text(r'''import importlib.util, json, os, pathlib, sys
+    # Provider packages are imported independently and execute from the cache.
+    shutil.copytree(ROOT / "providers", source / "providers")
+    shutil.copytree(ROOT / "adapters", source / "adapters", ignore=shutil.ignore_patterns("__pycache__"))
+    package = source / "providers/gemini-flash-lite/provider.toml"
+    package.write_text(package.read_text().replace('args = ["@source/adapters/gemini.py"]',
+                                                  'args = ["@source/tests/fake-gemini.py"]'))
+    (source / "tests").mkdir()
+    (source / "tests/fake-gemini.py").write_text(r'''import importlib.util, json, os, pathlib, sys
 from unittest.mock import MagicMock, patch
-spec = importlib.util.spec_from_file_location('gemini', '.please/adapters/gemini-flash-lite.py')
+adapter = pathlib.Path(__file__).resolve().parents[1] / 'adapters/gemini.py'
+spec = importlib.util.spec_from_file_location('gemini', adapter)
 gemini = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(gemini)
 request = json.load(sys.stdin)
@@ -118,7 +120,14 @@ class Opener:
 with patch.object(gemini, 'build_opener', return_value=Opener()):
     print(json.dumps(gemini.review(request)))
 ''')
+    git(source, "add", ".")
+    git(source, "commit", "--quiet", "-m", "test: add provider package and mock HTTP transport")
+    with (consumer / ".please/config.toml").open("a") as config:
+        config.write('\n[[provider_imports]]\nid = "gemini-flash-lite"\ngit = ' + json.dumps(str(source)) +
+                     '\npath = "providers/gemini-flash-lite"\nref = "main"\n')
     run([str(executable), "sync", "--yes"], cwd=consumer, env=env)
+    assert not (consumer / ".please/providers/gemini-flash-lite.toml").exists()
+    assert not (consumer / ".please/adapters").exists()
     # Hook execution must reuse the cache after the source becomes unavailable.
     source.rename(root / "offline-source")
     git(consumer, "add", ".")
@@ -134,19 +143,30 @@ with patch.object(gemini, 'build_opener', return_value=Opener()):
     assert len(report["results"]) == 2
     assert report["results"][0]["id"].endswith(":commit-message")
     assert report["results"][1]["status"] == "NOT_RUN"
+    review_rule, = [r for r in report["plan"]["scheduled"] if r["kind"] == "review"]
+    assert review_rule["provider_origin"]["path"] == "providers/gemini-flash-lite"
     assert len(calls.read_text().splitlines()) == 1  # Syntax failures make no HTTP request.
-    # Git normalizes nonzero commit-msg hook exits to 1; the report retains FAIL/ERROR.
+    # Advisory Review failures retain their verdict without blocking Git.
     for mode in ["FAIL", "ERROR", "file-evidence", "truncated"]:
         env["COMMIT_REVIEW_TEST_MODE"] = mode
-        git(consumer, "commit", "--allow-empty", "-m", "fix: fix stuff", expected=1)
-        assert git(consumer, "rev-parse", "HEAD").stdout.strip() == head
+        git(consumer, "commit", "--allow-empty", "-m", "fix: fix stuff")
+        next_head = git(consumer, "rev-parse", "HEAD").stdout.strip()
+        assert next_head != head
+        head = next_head
         report = json.loads((consumer / ".please/reports/last.json").read_text())
-        assert report["overall"] == ("FAIL" if mode == "FAIL" else "ERROR")
+        assert report["overall"] == "PASS"
+        result, = [r for r in report["results"] if r["kind"] == "review"]
+        assert result["status"] == ("FAIL" if mode == "FAIL" else "ERROR")
+        assert result["blocking"] is False
     previous_calls = calls.read_text()
     env.pop("GEMINI_API_KEY")
-    git(consumer, "commit", "--allow-empty", "-m", "fix: preserve focus", expected=1)
+    git(consumer, "commit", "--allow-empty", "-m", "fix: preserve focus")
     assert calls.read_text() == previous_calls
-    print("Integration passed: imported checks and header Review, mock Gemini HTTP, syntax gating, PASS/FAIL/ERROR, invalid evidence, missing credentials and unchanged HEAD after rejection.")
+    report = json.loads((consumer / ".please/reports/last.json").read_text())
+    assert report["overall"] == "PASS"
+    result, = [r for r in report["results"] if r["kind"] == "review"]
+    assert result["status"] == "ERROR" and result["blocking"] is False
+    print("Integration passed: imported checks and header Review, mock Gemini HTTP, syntax gating, PASS/FAIL/ERROR, invalid evidence, missing credentials, syntax rejection and non-blocking Review verdicts.")
 
 
 def main():

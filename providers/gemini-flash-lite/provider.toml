@@ -1,0 +1,7 @@
+command = "python3"
+args = ["@source/adapters/gemini.py"]
+timeout_seconds = 70
+
+[requirements]
+executables = ["python3"]
+env = ["GEMINI_API_KEY"]
