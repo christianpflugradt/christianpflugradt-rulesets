@@ -1,4 +1,0 @@
-id = "license"
-description = "Require an approved license at check and pre-push"
-run_at = ["pre-push", "check"]
-rules = ["rules/checks/license"]

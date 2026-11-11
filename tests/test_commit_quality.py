@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 from urllib.error import HTTPError, URLError
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("ruleset_gemini", ROOT / "adapters/gemini.py")
+spec = importlib.util.spec_from_file_location("ruleset_gemini", ROOT / "providers/gemini-flash-lite/adapter.py")
 gemini = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(gemini)
 

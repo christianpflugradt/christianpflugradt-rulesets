@@ -75,18 +75,17 @@ def integration(root, executable):
     (consumer / ".commit-scopes").write_text("cli\n")
     (consumer / ".please/config.toml").write_text(
         f'project = "My_App"\n[[imports]]\ngit = {json.dumps(str(source))}\n'
-        'path = "commit-msg/conventional-commits"\nref = "main"\n'
+        'path = "commit-msg/repository-conventions"\nref = "main"\n'
         '[imports.rule_parameters.commit-message]\nscopes_file = ".commit-scopes"\n')
     # Provider packages are imported independently and execute from the cache.
     shutil.copytree(ROOT / "providers", source / "providers")
-    shutil.copytree(ROOT / "adapters", source / "adapters", ignore=shutil.ignore_patterns("__pycache__"))
     package = source / "providers/gemini-flash-lite/provider.toml"
-    package.write_text(package.read_text().replace('args = ["@source/adapters/gemini.py"]',
+    package.write_text(package.read_text().replace('args = ["@provider/adapter.py"]',
                                                   'args = ["@source/tests/fake-gemini.py"]'))
     (source / "tests").mkdir()
     (source / "tests/fake-gemini.py").write_text(r'''import importlib.util, json, os, pathlib, sys
 from unittest.mock import MagicMock, patch
-adapter = pathlib.Path(__file__).resolve().parents[1] / 'adapters/gemini.py'
+adapter = pathlib.Path(__file__).resolve().parents[1] / 'providers/gemini-flash-lite/adapter.py'
 spec = importlib.util.spec_from_file_location('gemini', adapter)
 gemini = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(gemini)

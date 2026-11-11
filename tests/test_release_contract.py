@@ -9,7 +9,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("release_contract", ROOT / "scripts/release-contract.py")
+spec = importlib.util.spec_from_file_location("release_contract", ROOT / "rules/checks/release-contract/check.py")
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 SHA = "a" * 40
@@ -42,6 +42,16 @@ class ReleaseContractTests(unittest.TestCase):
         self.assertEqual(data["artifacts"], {"app-1.2.3": mod.digest(Path("dist/app-1.2.3"))})
         self.assertEqual(data["run_attempt"], "2")
 
+    def test_readiness_resolves_the_reusable_ci_rule_after_relocation(self):
+        env = dict(PLEASE_EXECUTION_POINT="release-readiness", PLEASE_PARAM_CI_POLICY="ci.json")
+        def load_ci(path):
+            self.assertEqual(Path(path), ROOT / "rules/checks/github-ci-success/check.py")
+            self.assertTrue(Path(path).is_file())
+            self.assertEqual(os.environ["PLEASE_PARAM_POLICY"], "ci.json")
+            return {"main": lambda: 2}
+        with patch.dict(os.environ, env), patch.object(mod.runpy, "run_path", side_effect=load_ci):
+            self.assertEqual(mod.main(), 2)
+
     def test_successful_workflow_verification_exports_the_cached_publication_guard(self):
         Path("policy.json").write_text(json.dumps(POLICY))
         env = dict(ENV, PLEASE_EXECUTION_POINT="release-verify",
@@ -49,7 +59,7 @@ class ReleaseContractTests(unittest.TestCase):
         with patch.dict(os.environ, env), patch.object(mod.subprocess, "check_output", return_value=SHA):
             self.assertEqual(mod.main(), 0)
         exported = Path("environment").read_text()
-        self.assertIn(f"PLEASE_RELEASE_GUARD={ROOT / 'adapters/release-guard.mjs'}\n", exported)
+        self.assertIn(f"PLEASE_RELEASE_GUARD={ROOT / 'scripts/release-guard.mjs'}\n", exported)
         self.assertIn("PLEASE_RELEASE_REPOSITORY=please-behave/cli\n", exported)
 
     def test_missing_extra_or_partial_rerun_evidence_blocks(self):

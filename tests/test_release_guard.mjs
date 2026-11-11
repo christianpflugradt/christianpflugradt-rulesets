@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { verifySource, verifyRelease } from "../adapters/release-guard.mjs";
+import { verifySource, verifyRelease } from "../scripts/release-guard.mjs";
 import { fileURLToPath } from "node:url";
 
 test("publication refuses changed versions before consulting Git", () => {
@@ -30,7 +30,7 @@ test("publication binds checkout, dispatch, repository, branch and current remot
     env.GITHUB_SHA = git("rev-parse", "HEAD");
     const context = { cwd: temporary, env, nextRelease: { version: "1.2.3" } };
     verifyRelease({}, context);
-    execFileSync(process.execPath, [fileURLToPath(new URL("../adapters/release-guard.mjs", import.meta.url)), "--source"],
+    execFileSync(process.execPath, [fileURLToPath(new URL("../scripts/release-guard.mjs", import.meta.url)), "--source"],
       { cwd: temporary, env, stdio: "pipe" });
     for (const field of ["GITHUB_SHA", "GITHUB_REF", "GITHUB_REPOSITORY", "PLEASE_RELEASE_REPOSITORY"]) {
       assert.throws(() => verifySource({ ...env, [field]: "foreign" }, temporary));

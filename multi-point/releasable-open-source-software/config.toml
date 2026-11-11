@@ -1,4 +1,4 @@
-id = "releasable-project"
+id = "releasable-open-source-software"
 description = "Reuse trusted CI and bind release candidates to source and workflow attempts"
 run_at = ["release-readiness", "release-record", "release-verify"]
 rules = ["rules/checks/release-contract"]

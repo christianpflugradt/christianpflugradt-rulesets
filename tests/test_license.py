@@ -134,7 +134,7 @@ class LicenseTests(unittest.TestCase):
     def test_rule_set_import_and_shared_entrypoint(self):
         source = self.base / "source"
         source.mkdir()
-        for directory in ("repository-conventions", "multi-point", "rules", "scripts"):
+        for directory in ("multi-point", "rules", "scripts"):
             shutil.copytree(ROOT / directory, source / directory, ignore=shutil.ignore_patterns("__pycache__"))
         subprocess.run(["git", "init", "--quiet", "--initial-branch=main", str(source)], check=True)
         subprocess.run(["git", "add", "."], cwd=source, check=True)
@@ -144,7 +144,7 @@ class LicenseTests(unittest.TestCase):
         config.parent.mkdir()
         (self.repo / ".gitignore").write_text(".please/reports/\n")
         shutil.copyfile(RULE / "licenses/Unlicense.txt", self.repo / "LICENSE")
-        for path, set_id in (("repository-conventions", "repository-conventions"), ("multi-point/license", "license")):
+        for path, set_id in (("multi-point/open-source-software", "open-source-software"),):
             with self.subTest(path=path):
                 config.write_text("project = \"License fixture\"\n[[imports]]\ngit = " + json.dumps(str(source)) +
                                   "\npath = " + json.dumps(path) + "\nref = \"main\"\n[imports.rule_parameters.license]\ntarget = \"LICENSE\"\n")

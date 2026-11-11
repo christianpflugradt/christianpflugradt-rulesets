@@ -1,6 +1,44 @@
-# Security scanner configuration
+# Security
 
-The [Security Rule Set](README.md#security) uses `gitleaks dir` on a temporary
+The `multi-point/security` set runs two blocking checks at `check` and `pre-push`:
+
+- `sensitive-files` rejects `.env` and `.env.*` filenames, except `.env.example`,
+  `.env.sample` and `.env.template`, and files ending in `.tfstate` or containing
+  `.tfstate.`. Matching is case-sensitive and applies in every directory.
+- `secret-scan` scans file contents with Gitleaks.
+
+`check` examines tracked and nonignored untracked working-tree files, including
+unstaged edits. Deleted files are excluded; ignored files are included only when
+tracked. `pre-push` examines the current `HEAD` tree, independent of working-tree
+or index changes. Neither point scans Git history. `pre-push` does not inspect
+other refs being pushed or consume Git's pre-push input.
+
+Requirements: POSIX `sh`, Python 3.9+, Git and Gitleaks v8 supporting `gitleaks dir`
+(tested with 8.30.1). Install these tools explicitly before running checks.
+Please Behave and these rules install no dependencies.
+
+```toml
+[[imports]]
+git = "https://github.com/christianpflugradt/please-behave-rulesets.git"
+path = "multi-point/security"
+ref = "<FULL_REVIEWED_COMMIT_SHA>"
+```
+
+Pin a full commit hash for reproducible imports. Run `please sync` to resolve
+the import and install the managed pre-push hook, then run
+`please run --at check` to inspect the working tree explicitly.
+See the scanner configuration and limitations below.
+
+## Snapshot selection
+
+The security and license rules accept optional `snapshot = "head"` or
+`"worktree"`. At `check` the default is `worktree`; at `pre-push` it is `head`.
+A conflicting explicit selection is ERROR. Custom execution points require an
+explicit snapshot. Neither selection scans history.
+
+## Scanner configuration and limitations
+
+The `multi-point/security` ruleset uses `gitleaks dir` on a temporary
 snapshot. `check` copies current tracked and nonignored untracked files;
 `pre-push` reads blobs from `HEAD` directly, without export attributes or history.
 

@@ -126,7 +126,7 @@ def main():
     try:
         point = os.environ["PLEASE_EXECUTION_POINT"]
         if point == "release-readiness":
-            script = Path(__file__).resolve().parents[1] / "rules/checks/github-ci-success/check.py"
+            script = Path(__file__).resolve().parents[1] / "github-ci-success/check.py"
             os.environ["PLEASE_PARAM_POLICY"] = os.environ["PLEASE_PARAM_CI_POLICY"]
             return runpy.run_path(str(script))["main"]()
         require(point in {"release-record", "release-verify"}, "Unexpected release execution point")
@@ -134,7 +134,7 @@ def main():
         head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True, timeout=15).strip()
         {"release-record": record, "release-verify": verify}[point](policy, os.environ, head)
         if point == "release-verify":
-            guard = Path(__file__).resolve().parents[1] / "adapters/release-guard.mjs"
+            guard = Path(__file__).resolve().parents[3] / "scripts/release-guard.mjs"
             regular(guard)
             with open(os.environ["GITHUB_ENV"], "a") as output:
                 output.write(f"PLEASE_RELEASE_GUARD={guard}\nPLEASE_RELEASE_REPOSITORY={policy['repository']}\n")

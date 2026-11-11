@@ -2,7 +2,7 @@ id = "release-contract"
 description = "Verify CI readiness, record candidates and verify complete release evidence"
 
 [check]
-command = "python3 @source/scripts/release-contract.py"
+command = "python3 @rule/check.py"
 timeout_seconds = 180
 
 [parameters.ci_policy]

@@ -1,0 +1,4 @@
+id = "open-source-software"
+description = "Require an approved license for open-source software"
+run_at = ["pre-push", "check"]
+rules = ["rules/checks/license"]

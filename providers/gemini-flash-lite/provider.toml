@@ -1,5 +1,5 @@
 command = "python3"
-args = ["@source/adapters/gemini.py"]
+args = ["@provider/adapter.py"]
 timeout_seconds = 70
 
 [requirements]
