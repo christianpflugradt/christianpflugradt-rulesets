@@ -48,7 +48,7 @@ hook compares Semantic Release's recalculated version with the plan, then checks
 the actual checkout, dispatched SHA, expected repository, main branch and current
 remote main immediately before tagging. `verifySource` provides the same source
 guard for custom prerelease publication. No repository needs a copied source or
-version-check implementation. Node 26 and Python 3.11+ are required for these gates.
+version-check implementation. Node 24+ and Python 3.11+ are required for these gates.
 
 The current commit-message setup requires published Please Behave v0.5.0 or
 later for independent provider imports and commit-header reviews. Other sets
