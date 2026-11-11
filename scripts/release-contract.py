@@ -66,6 +66,8 @@ def policy_from(path):
         require(len(files) == len(set(files)), "Duplicate artifact paths")
         for file in files:
             relative(file.replace("{version}", "1.2.3"))
+            require("{" not in file.replace("{version}", "") and "}" not in file.replace("{version}", ""),
+                    "Unsupported artifact path substitution")
     return data
 
 
@@ -115,6 +117,7 @@ def verify(policy, env, head):
             "Incomplete or unexpected candidate evidence set")
     for target in policy["targets"]:
         data = read_json(directory / f"{target}.json")
+        require(isinstance(data, dict) and type(data.get("schema_version")) is int, "Invalid evidence schema")
         expected = dict(context, target=target, artifacts=artifact_hashes(policy, target, context["version"]))
         require(data == expected, f"Candidate identity or checksums differ: {target}")
 

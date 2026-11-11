@@ -63,6 +63,9 @@ class ReleaseContractTests(unittest.TestCase):
                 path.write_text(json.dumps(data))
                 with self.assertRaises(ValueError): mod.verify(POLICY, ENV, SHA)
         path.write_text(json.dumps(original))
+        path.write_text(json.dumps(dict(original, schema_version=True)))
+        with self.assertRaises(ValueError): mod.verify(POLICY, ENV, SHA)
+        path.write_text(json.dumps(original))
         Path("dist/app-1.2.3").write_bytes(b"changed")
         with self.assertRaises(ValueError): mod.verify(POLICY, ENV, SHA)
 
