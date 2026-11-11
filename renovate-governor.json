@@ -1,19 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "description": "Keep the published Please Behave governor current after successful CI.",
-  "customManagers": [
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/^\\.please-version$/"],
-      "matchStrings": ["^(?<currentValue>v\\d+\\.\\d+\\.\\d+)\\s*$"],
-      "depNameTemplate": "please-behave/cli",
-      "datasourceTemplate": "github-releases",
-      "versioningTemplate": "semver"
-    }
-  ],
   "packageRules": [
     {
       "matchPackageNames": ["please-behave/cli"],
+      "matchManagers": ["mise"],
       "matchDatasources": ["github-releases"],
       "automerge": true,
       "automergeType": "pr",
