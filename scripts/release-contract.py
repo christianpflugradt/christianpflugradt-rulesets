@@ -133,6 +133,11 @@ def main():
         policy = policy_from(os.environ["PLEASE_PARAM_ARTIFACTS_POLICY"])
         head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True, timeout=15).strip()
         {"release-record": record, "release-verify": verify}[point](policy, os.environ, head)
+        if point == "release-verify":
+            guard = Path(__file__).resolve().parents[1] / "adapters/release-guard.mjs"
+            regular(guard)
+            with open(os.environ["GITHUB_ENV"], "a") as output:
+                output.write(f"PLEASE_RELEASE_GUARD={guard}\nPLEASE_RELEASE_REPOSITORY={policy['repository']}\n")
         print(f"PASS: {point} verified source, version, workflow attempt and artifact hashes")
         return 0
     except (OSError, KeyError, TypeError, ValueError, subprocess.SubprocessError) as error:

@@ -40,6 +40,16 @@ internal workflow evidence, not a signature or an independent attestation.
 
 The original `release/readiness` set remains available for pinned consumers.
 
+On successful `release-verify`, the Check exports `PLEASE_RELEASE_GUARD` and
+`PLEASE_RELEASE_REPOSITORY` through GitHub's environment file. The first is the
+immutable cached `adapters/release-guard.mjs` module, which thin local Semantic
+Release adapters load with Node's `createRequire`. Its synchronous `verifyRelease`
+hook compares Semantic Release's recalculated version with the plan, then checks
+the actual checkout, dispatched SHA, expected repository, main branch and current
+remote main immediately before tagging. `verifySource` provides the same source
+guard for custom prerelease publication. No repository needs a copied source or
+version-check implementation. Node 26 and Python 3.11+ are required for these gates.
+
 The current commit-message setup requires published Please Behave v0.5.0 or
 later for independent provider imports and commit-header reviews. Other sets
 retain their v0.1.0 minimum for explicit path references. Commands run in the
