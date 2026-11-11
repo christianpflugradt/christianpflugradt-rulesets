@@ -1,6 +1,45 @@
 # Please Behave rule sets
 
 Personal checks and reviews maintained by Christian Pflugradt for [Please Behave](https://github.com/please-behave/cli).
+
+## Releasable projects
+
+Import `release/releasable-project` separately from the repository baseline.
+Declare `release-readiness`, `release-record` and `release-verify` as custom points.
+The `release-contract` Check has two required file parameters: `ci_policy` uses
+the existing exact-source CI policy below; `artifacts_policy` uses this format:
+
+```json
+{
+  "schema_version": 1,
+  "repository": "please-behave/cli",
+  "workflow": ".github/workflows/release.yml",
+  "root": "dist",
+  "targets": {"linux": ["app-{version}.tar.gz"]}
+}
+```
+
+Readiness reuses the existing trusted CI proof, including partial CI reruns,
+without repeating source checks or imposing an age limit. After successful
+artifact-specific candidate tests, run `release-record` with `RELEASE_TARGET`.
+It writes `release-evidence/TARGET.json` with schema version, repository, workflow,
+source SHA, planned version, run ID/attempt, target and SHA-256 hashes for every
+listed artifact. `{version}` is the only path substitution. Paths are relative
+to `root`; use `.` for repository-content releases such as composite Actions.
+
+Upload each evidence file separately from public assets. After collecting all
+candidates and evidence, `release-verify` requires exactly the configured target
+set and validates every identity and digest against the current release context.
+Set `EXPECTED_RELEASE_VERSION` at both points. Only `release.yml` on main is
+accepted. Missing, foreign, altered or earlier-attempt evidence blocks publication;
+rerun the whole Release workflow after a partial candidate rerun. Symlinks,
+traversal and duplicate JSON keys are rejected. Existing artifact-specific
+validation remains responsible for archive contents, executable versions,
+runtime receipts and any generated aggregate checksum file. The manifest is
+internal workflow evidence, not a signature or an independent attestation.
+
+The original `release/readiness` set remains available for pinned consumers.
+
 The current commit-message setup requires published Please Behave v0.5.0 or
 later for independent provider imports and commit-header reviews. Other sets
 retain their v0.1.0 minimum for explicit path references. Commands run in the
