@@ -1,6 +1,6 @@
 # Open-source software
 
-The `multi-point/open-source-software` set currently includes the blocking
+The `rulesets/multi-point/open-source-software` set currently includes the blocking
 `license` check at `check` and `pre-push`. It compares the target file byte-for-byte with the regular,
 nonhidden files in `rules/checks/license/licenses/`. The included references are
 Apache-2.0, PolyForm-Noncommercial-1.0.0 and Unlicense, downloaded unchanged
@@ -15,8 +15,8 @@ references.
 
 ```toml
 [[imports]]
-git = "https://github.com/christianpflugradt/please-behave-rulesets.git"
-path = "multi-point/open-source-software"
+git = "https://github.com/christianpflugradt/please-behave-governance.git"
+path = "rulesets/multi-point/open-source-software"
 ref = "<FULL_REVIEWED_COMMIT_SHA>"
 
 [imports.rule_parameters.license]

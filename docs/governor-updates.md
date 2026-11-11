@@ -1,6 +1,6 @@
 # Governor updates with Renovate
 
-Extend `github>christianpflugradt/please-behave-rulesets:renovate-governor` in
+Extend `github>christianpflugradt/please-behave-governance:renovate-governor` in
 `renovate.json`. The shared preset tracks the exact stable release in
 `.please-version` using GitHub Releases. Renovate opens PRs for newer stable
 governors, including major versions, and auto-merges after checks pass. These

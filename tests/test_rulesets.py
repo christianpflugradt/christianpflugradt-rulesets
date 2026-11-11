@@ -34,7 +34,7 @@ class RulesetIntegrationTests(unittest.TestCase):
                 return run(["git", "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
                             "-c", "commit.gpgsign=false", *args], cwd=cwd)
 
-            for directory in ("commit-msg", "multi-point", "rules", "providers", "scripts"):
+            for directory in ("rulesets", "rules", "providers", "scripts"):
                 shutil.copytree(ROOT / directory, source / directory,
                                 ignore=shutil.ignore_patterns("__pycache__"))
             for repo in (source, consumer):
@@ -42,8 +42,8 @@ class RulesetIntegrationTests(unittest.TestCase):
             git(source, "add", ".")
             git(source, "commit", "--quiet", "-m", "test: record canonical bundles")
             revision = git(source, "rev-parse", "HEAD").strip()
-            paths = ["commit-msg/repository-conventions", "multi-point/open-source-software",
-                     "multi-point/releasable-open-source-software", "multi-point/security"]
+            paths = ["rulesets/commit-msg/repository-conventions", "rulesets/multi-point/open-source-software",
+                     "rulesets/multi-point/releasable-open-source-software", "rulesets/multi-point/security"]
             (consumer / ".please").mkdir()
             config = 'project = "Catalog fixture"\n[execution_points]\n'
             config += 'custom = ["release-readiness", "release-record", "release-verify"]\n'

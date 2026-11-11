@@ -2,16 +2,25 @@
 
 ## Policy bundle restructuring
 
+The repository is now `christianpflugradt/please-behave-governance`. New import
+examples and the Renovate preset reference use that name. Existing consumer pins
+are unchanged; the previous Git URL currently resolves to the renamed repository.
+The local checkout directory can be renamed independently.
+
+All sets now live under `rulesets/`. Consumers adopting the intermediate
+`cb30851` layout must prefix their set paths with `rulesets/` when upgrading to
+this layout. Provider paths and repository-relative Rule references stay unchanged.
+
 Existing consumers pinned to full commits retain their configuration and behavior.
 No consumer migration is part of this restructuring. New revisions use these
 canonical paths; old aliases are not retained:
 
 | Previous path | Canonical path | Meaning |
 | --- | --- | --- |
-| `commit-msg/conventional-commits` | `commit-msg/repository-conventions` | Universal conventions, unchanged syntax Check and advisory Review |
-| `repository-conventions`, `multi-point/license` | `multi-point/open-source-software` | License policy belongs to open-source software |
-| `release/releasable-project` | `multi-point/releasable-open-source-software` | Existing release contract, unchanged points and parameters |
-| `multi-point/security` | `multi-point/security` | Unchanged independent security bundle |
+| `commit-msg/conventional-commits` | `rulesets/commit-msg/repository-conventions` | Universal conventions, unchanged syntax Check and advisory Review |
+| `repository-conventions`, `multi-point/license` | `rulesets/multi-point/open-source-software` | License policy belongs to open-source software |
+| `release/releasable-project` | `rulesets/multi-point/releasable-open-source-software` | Existing release contract, unchanged points and parameters |
+| `multi-point/security` | `rulesets/multi-point/security` | Unchanged independent security bundle |
 | `release/readiness` | Retired | Legacy mixed bundle; full-commit pins retain it |
 
 The retired readiness set combined CI proof, security and license checks. It is
@@ -28,7 +37,8 @@ exported path rather than hard-code source-layout details.
 
 Update pins and paths together only during an explicitly authorized migration.
 Revalidate parameters and plans with the published governor before adoption.
-The Renovate preset remains at `renovate-governor.json` with unchanged contents.
+The Renovate preset remains at `renovate-governor.json` with unchanged contents;
+its documented preset URL uses the renamed repository.
 
 ## Historical runtime compatibility
 

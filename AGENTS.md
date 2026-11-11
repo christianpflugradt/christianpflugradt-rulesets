@@ -1,4 +1,4 @@
-# Working on these rulesets
+# Working on Please Behave governance
 
 ## Policy boundaries
 
@@ -18,9 +18,9 @@
 
 ## Structure and implementation
 
-- Put sets at `<execution-point>/<bundle>/config.toml` or
-  `multi-point/<bundle>/config.toml` according to their actual `run_at` values.
-  Each set defines one declarative bundle with repository-relative Rule paths.
+- Put sets at `rulesets/<execution-point>/<bundle>/config.toml` or
+  `rulesets/multi-point/<bundle>/config.toml` according to their actual `run_at`
+  values. Each set defines one declarative bundle with repository-relative Rule paths.
 - Keep Rule-specific code, prompts and reference data with `rule.toml` under
   `rules/checks/` or `rules/reviews/`. Put reusable helpers in `scripts/` and
   provider definitions and adapters together under `providers/<provider>/`.

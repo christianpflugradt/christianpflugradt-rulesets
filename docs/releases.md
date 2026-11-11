@@ -1,6 +1,6 @@
 # Releasable open-source software
 
-Import `multi-point/releasable-open-source-software` separately from the
+Import `rulesets/multi-point/releasable-open-source-software` separately from the
 repository baseline.
 Declare `release-readiness`, `release-record` and `release-verify` as custom points.
 For example, in the consumer's `.please/config.toml`:
@@ -10,8 +10,8 @@ For example, in the consumer's `.please/config.toml`:
 custom = ["release-readiness", "release-record", "release-verify"]
 
 [[imports]]
-git = "https://github.com/christianpflugradt/please-behave-rulesets.git"
-path = "multi-point/releasable-open-source-software"
+git = "https://github.com/christianpflugradt/please-behave-governance.git"
+path = "rulesets/multi-point/releasable-open-source-software"
 ref = "<FULL_REVIEWED_COMMIT_SHA>"
 
 [imports.rule_parameters.release-contract]

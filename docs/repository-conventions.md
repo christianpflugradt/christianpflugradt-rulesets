@@ -1,6 +1,6 @@
 # Repository conventions
 
-The `commit-msg/repository-conventions` set contains a deterministic syntax Check
+The `rulesets/commit-msg/repository-conventions` set contains a deterministic syntax Check
 and an advisory wording Review at `commit-msg`. The Check accepts
 `<type>[optional scope][!]: <description>`
 with a nonblank description. Types come from
@@ -18,8 +18,8 @@ Add this import to the consuming project's `.please/config.toml`:
 
 ```toml
 [[imports]]
-git = "https://github.com/christianpflugradt/please-behave-rulesets.git"
-path = "commit-msg/repository-conventions"
+git = "https://github.com/christianpflugradt/please-behave-governance.git"
+path = "rulesets/commit-msg/repository-conventions"
 ref = "<FULL_REVIEWED_COMMIT_SHA>"
 
 [imports.rule_parameters.commit-message]
@@ -32,7 +32,7 @@ copy is needed in the consumer:
 ```toml
 [[provider_imports]]
 id = "gemini-flash-lite"
-git = "https://github.com/christianpflugradt/please-behave-rulesets.git"
+git = "https://github.com/christianpflugradt/please-behave-governance.git"
 path = "providers/gemini-flash-lite"
 ref = "<FULL_REVIEWED_COMMIT_SHA>"
 ```

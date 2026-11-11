@@ -56,7 +56,7 @@ def integration(root, executable):
     source.mkdir()
     consumer.mkdir()
     shutil.copytree(ROOT / "rules", source / "rules")
-    shutil.copytree(ROOT / "commit-msg", source / "commit-msg")
+    shutil.copytree(ROOT / "rulesets", source / "rulesets")
     env = {k: v for k, v in os.environ.items() if not k.startswith("PLEASE_")}
     env.update(XDG_CACHE_HOME=str(root / "cache"), NO_COLOR="1", GEMINI_API_KEY="synthetic-key",
                GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1", PYTHONDONTWRITEBYTECODE="1")
@@ -75,7 +75,7 @@ def integration(root, executable):
     (consumer / ".commit-scopes").write_text("cli\n")
     (consumer / ".please/config.toml").write_text(
         f'project = "My_App"\n[[imports]]\ngit = {json.dumps(str(source))}\n'
-        'path = "commit-msg/repository-conventions"\nref = "main"\n'
+        'path = "rulesets/commit-msg/repository-conventions"\nref = "main"\n'
         '[imports.rule_parameters.commit-message]\nscopes_file = ".commit-scopes"\n')
     # Provider packages are imported independently and execute from the cache.
     shutil.copytree(ROOT / "providers", source / "providers")
