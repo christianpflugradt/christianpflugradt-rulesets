@@ -1,4 +1,4 @@
-# Governor updates with Renovate
+# Governor and ruleset updates with Renovate
 
 Extend `github>christianpflugradt/please-behave-governance:renovate-governor` in
 `renovate.json`. Declare the exact published governor in `mise.toml`:
@@ -25,3 +25,14 @@ entry and install that exact published binary before checks; `mise install`
 provides it locally through the GitHub backend with checksum and available
 artifact-attestation verification. The preset follows this repository's default branch, like other
 shared Renovate policies; Please Behave runtime imports retain immutable pins.
+
+## Ruleset pins
+
+The same preset tracks the full-commit `ref` of every `[[imports]]` and
+`[[provider_imports]]` entry in `.please/config.toml` whose `git` is this
+repository. Renovate follows `main` and opens one PR that moves all such pins to
+the latest commit, then auto-merges it after checks pass, without a cooldown.
+Checks run `please sync` against the new revision, so a removed path or a Rule that
+needs a newer governor fails the PR instead of merging. Such a PR stays open and is
+rebased once the governor update has merged. `git` and `ref` may appear in either
+order within an entry.

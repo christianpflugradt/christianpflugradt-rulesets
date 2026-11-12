@@ -1,6 +1,20 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Keep the published Please Behave governor current after successful CI.",
+  "description": "Keep the published Please Behave governor and the pinned shared revisions current after successful CI.",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Track the commit pins of Please Behave imports in .please/config.toml on the default branch.",
+      "managerFilePatterns": ["/^\\.please/config\\.toml$/"],
+      "matchStrings": [
+        "git\\s*=\\s*\"(?<packageName>https://github\\.com/christianpflugradt/please-behave-governance\\.git)\"[^\\[]*?ref\\s*=\\s*\"(?<currentDigest>[0-9a-f]{40})\"",
+        "ref\\s*=\\s*\"(?<currentDigest>[0-9a-f]{40})\"[^\\[]*?git\\s*=\\s*\"(?<packageName>https://github\\.com/christianpflugradt/please-behave-governance\\.git)\""
+      ],
+      "datasourceTemplate": "git-refs",
+      "depNameTemplate": "please-behave-governance",
+      "currentValueTemplate": "main"
+    }
+  ],
   "packageRules": [
     {
       "matchPackageNames": ["please-behave/cli"],
@@ -11,6 +25,17 @@
       "platformAutomerge": false,
       "ignoreTests": false,
       "ignoreUnstable": true,
+      "minimumReleaseAge": "0 days",
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "deps"
+    },
+    {
+      "matchPackageNames": ["https://github.com/christianpflugradt/please-behave-governance.git"],
+      "matchDatasources": ["git-refs"],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": false,
+      "ignoreTests": false,
       "minimumReleaseAge": "0 days",
       "semanticCommitType": "chore",
       "semanticCommitScope": "deps"
