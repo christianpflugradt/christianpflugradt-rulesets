@@ -1,0 +1,8 @@
+id = "editorconfig"
+description = "Require a root .editorconfig that states the shared baseline"
+enabled = true
+blocking = true
+
+[check]
+command = "python3 @rule/check.py @context"
+timeout_seconds = 30

@@ -2,8 +2,38 @@
 
 The `rulesets/multi-point/repository-conventions` set runs at `pre-commit` and `check`
 and keeps its two commit rules at `commit-msg` through per-reference overrides. It requires
-Please Behave 0.8.0 or later. It contains the `agents-size` Check, a deterministic
+Please Behave 0.8.0 or later. It contains the `agents-size` and `editorconfig` Checks, a deterministic
 commit syntax Check, an advisory wording Review and an advisory `AGENTS.md` quality Review.
+
+## EditorConfig baseline
+
+The blocking `editorconfig` Check requires a root `.editorconfig` that states this baseline;
+`pre-commit` and `check` read the working tree. A missing file returns FAIL (1), as does any
+missing section or deviating value; an unreadable, non-UTF-8 or non-regular file returns ERROR (2).
+
+```ini
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[Makefile]
+indent_style = tab
+```
+
+Keys and values are compared case-insensitively; comments, order and spacing do not matter.
+Additional sections and properties are the repository's own, so file-type overrides such as
+`[*.{rs,py}]` with `indent_size = 4` are neither required nor inspected. The Check needs no
+parameters and does not verify that files obey the file; use an EditorConfig-aware formatter or
+linter for that.
 
 ## AGENTS.md size
 
@@ -153,7 +183,7 @@ source files or HEAD. Findings use `source: "commit-header"`, `path: null`,
 `line: 1`; the CLI validates IDs, evidence and header stability. It rejects file
 citations and incomplete verdicts. No comparison with the actual change occurs.
 These rules do not inspect commit ranges or PR titles. The Review runs only at
-`commit-msg`, not in CI `check`, pre-push or release readiness. Only `agents-size` runs at `pre-commit` and `check`.
+`commit-msg`, not in CI `check`, pre-push or release readiness. Only the deterministic `agents-size` and `editorconfig` Checks run at `pre-commit` and `check`.
 
 A direct `please run --at commit-msg` or offline preview has no Git message
 argument and cannot run this set. Use a real Git commit/amend after setup, then

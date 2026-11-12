@@ -1,8 +1,6 @@
 """Limit the approximate token count of the root AGENTS.md."""
 from pathlib import Path
 import re
-import stat
-import subprocess
 import sys
 
 
@@ -29,37 +27,12 @@ def parse_limit(value):
     return int(value)
 
 
-def read_target(selected):
-    """Return the file bytes of the selected snapshot, or None when absent."""
-    if selected == "head":
-        listed = subprocess.run(["git", "ls-tree", "-z", "HEAD", "--", f":(literal){TARGET}"],
-                                capture_output=True, check=False)
-        if listed.returncode != 0:
-            raise RuntimeError(listed.stderr.decode(errors="replace").strip())
-        if not listed.stdout:
-            return None
-        if listed.stdout.split(b" ", 1)[0] not in (b"100644", b"100755"):
-            raise RuntimeError(f"{TARGET} is not a regular file in HEAD")
-        shown = subprocess.run(["git", "show", f"HEAD:{TARGET}"], capture_output=True, check=False)
-        if shown.returncode != 0:
-            raise RuntimeError(shown.stderr.decode(errors="replace").strip())
-        return shown.stdout
-    path = Path.cwd().resolve() / TARGET
-    try:
-        mode = path.lstat().st_mode
-    except FileNotFoundError:
-        return None
-    if not stat.S_ISREG(mode):
-        raise RuntimeError(f"{TARGET} is not a regular file")
-    return path.read_bytes()
-
-
 def main():
-    from snapshot import execution_point, select_snapshot
+    from snapshot import execution_point, read_file, select_snapshot
     require_arguments(2)
     point = execution_point(sys.argv[1])
     limit = parse_limit(sys.argv[2])
-    content = read_target(select_snapshot(point))
+    content = read_file(select_snapshot(point), TARGET)
     if content is None:
         print(f"PASS: {TARGET} is absent; nothing to limit ({point})")
         return 0

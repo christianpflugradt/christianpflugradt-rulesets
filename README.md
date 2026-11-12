@@ -7,12 +7,12 @@ that apply to a repository; each bundle adds to the others.
 
 | Ruleset path | Repository group | Execution points | Current rules |
 | --- | --- | --- | --- |
-| `rulesets/multi-point/repository-conventions` | Every repository, public or private, software or otherwise | `pre-commit`, `check`; `commit-msg` for commit rules | `AGENTS.md` size limit, Conventional Commit syntax and advisory header wording |
+| `rulesets/multi-point/repository-conventions` | Every repository, public or private, software or otherwise | `pre-commit`, `check`; `commit-msg` for commit rules | `AGENTS.md` size limit, EditorConfig baseline, Conventional Commit syntax and advisory header wording |
 | `rulesets/multi-point/open-source-software` | Open-source software | `check`, `pre-push` | Approved license |
 | `rulesets/multi-point/releasable-open-source-software` | Releasable open-source software | `release-readiness`, `release-record`, `release-verify` | Exact-source CI proof, candidate evidence and publication guards |
 | `rulesets/multi-point/security` | Repositories adopting the security policy | `check`, `pre-push` | Sensitive filenames and secret scanning |
 
-Repository conventions stay lightweight and work through Git hooks alone; `check` adds the same size limit to CI.
+Repository conventions stay lightweight and work through Git hooks alone; `check` adds the same size limit and EditorConfig baseline to CI.
 Security is a deliberate domain separation. License checking belongs to the
 open-source bundle. Aligned `ci.yml` and `release.yml` structure checks belong to
 the open-source and release bundles respectively, but are **not implemented yet**.
