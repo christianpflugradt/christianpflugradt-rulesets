@@ -1,0 +1,7 @@
+id = "workflows"
+description = "Validate GitHub workflow syntax and expressions with actionlint"
+blocking = true
+
+[check]
+command = "actionlint"
+timeout_seconds = 120

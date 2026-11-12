@@ -136,6 +136,9 @@ class LicenseTests(unittest.TestCase):
         config.parent.mkdir()
         (self.repo / ".gitignore").write_text(".please/reports/\n")
         shutil.copyfile(RULE / "licenses/Unlicense.txt", self.repo / "LICENSE")
+        (self.repo / ".github/workflows").mkdir(parents=True)
+        (self.repo / ".github/workflows/ci.yml").write_text(
+            "name: CI\non: push\njobs:\n  check:\n    runs-on: ubuntu-24.04\n    steps:\n      - run: echo ok\n")
         for path, set_id in (("rulesets/multi-point/open-source-software", "open-source-software"),):
             with self.subTest(path=path):
                 config.write_text("project = \"License fixture\"\n[[imports]]\ngit = " + json.dumps(str(source)) +
@@ -147,7 +150,7 @@ class LicenseTests(unittest.TestCase):
                 please("sync", "--yes")
                 for point in ("check", "pre-push"):
                     plan = json.loads(please("run", "--at", point, "--plan", "--json").stdout)
-                    rule, = plan["scheduled"]
+                    rule, = [r for r in plan["scheduled"] if r["id"].endswith(":license")]
                     self.assertTrue(rule["id"].endswith(":license"))
                     self.assertTrue(rule["blocking"])
                     self.assertEqual(rule["origin"]["external"]["path"], path)

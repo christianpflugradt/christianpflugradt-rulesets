@@ -1,0 +1,7 @@
+id = "npm-audit"
+description = "Audit npm high and critical advisories for every tracked package-lock.json"
+blocking = true
+
+[check]
+command = "python3 @rule/check.py"
+timeout_seconds = 300

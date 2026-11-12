@@ -1,4 +1,9 @@
 id = "open-source-software"
-description = "Require an approved license for open-source software"
+description = "Require an approved license and aligned quality assurance for open-source software"
 run_at = ["pre-push", "check"]
-rules = ["rules/checks/license"]
+rules = [
+  "rules/checks/license",
+  "rules/checks/workflows",
+  "rules/checks/shell",
+  { id = "rules/checks/npm-audit", run_at = ["check"] },
+]

@@ -80,8 +80,8 @@ class RulesetIntegrationTests(unittest.TestCase):
             expected = {
                 "pre-commit": {"agents-size"},
                 "commit-msg": {"commit-message", "commit-message-quality"},
-                "check": {"agents-size", "license", "secret-scan", "sensitive-files"},
-                "pre-push": {"license", "secret-scan", "sensitive-files"},
+                "check": {"agents-size", "license", "workflows", "shell", "npm-audit", "secret-scan", "sensitive-files"},
+                "pre-push": {"license", "workflows", "shell", "secret-scan", "sensitive-files"},
                 "release-readiness": {"release-contract"},
                 "release-record": {"release-contract"},
                 "release-verify": {"release-contract"},
