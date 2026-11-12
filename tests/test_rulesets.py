@@ -57,7 +57,9 @@ class RulesetIntegrationTests(unittest.TestCase):
                 elif path.endswith("releasable-open-source-software"):
                     config += '[imports.rule_parameters.release-contract]\nci_policy = "ci.json"\nartifacts_policy = "artifacts.json"\n'
             config += ('\n[[provider_imports]]\nid = "gemini-flash-lite"\n'
-                       f'git = {json.dumps(str(source))}\npath = "providers/gemini-flash-lite"\nref = "{revision}"\n')
+                       f'git = {json.dumps(str(source))}\npath = "providers/gemini-flash-lite"\nref = "{revision}"\n'
+                       '\n[[provider_imports]]\nid = "gemini-flash"\n'
+                       f'git = {json.dumps(str(source))}\npath = "providers/gemini-flash"\nref = "{revision}"\n')
             (consumer / ".please/config.toml").write_text(config)
             (consumer / ".commit-scopes").write_text("docs\n")
             (consumer / "AGENTS.md").write_text("# Agents\n")

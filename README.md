@@ -49,7 +49,7 @@ the Gemini and GitHub API operations themselves still require network access.
 
 | Bundle | Required consumer configuration | Tools and credentials |
 | --- | --- | --- |
-| Repository conventions | `agents-size.max_tokens`; `commit-message.scopes_file`; independent `gemini-flash-lite` provider import | Python 3.9+, Git and `GEMINI_API_KEY` for the wording and `AGENTS.md` reviews |
+| Repository conventions | `agents-size.max_tokens`; `commit-message.scopes_file`; independent `gemini-flash-lite` and `gemini-flash` provider imports | Python 3.9+, Git and `GEMINI_API_KEY` for the wording and `AGENTS.md` reviews |
 | Open-source software | `license.target`, usually `LICENSE` | Python 3.9+, Git |
 | Releasable open-source software | Three declared custom points; `release-contract.ci_policy` and `.artifacts_policy` | Python 3.11+, Git, Node 24+ for the publication guard, GitHub Actions context and `GITHUB_TOKEN` |
 | Security | No required parameters at its assigned points | Python 3.9+, Git, Gitleaks v8 with `gitleaks dir` |

@@ -126,7 +126,9 @@ with patch.object(gemini, 'build_opener', return_value=Opener()):
     git(source, "commit", "--quiet", "-m", "test: add provider package and mock HTTP transport")
     with (consumer / ".please/config.toml").open("a") as config:
         config.write('\n[[provider_imports]]\nid = "gemini-flash-lite"\ngit = ' + json.dumps(str(source)) +
-                     '\npath = "providers/gemini-flash-lite"\nref = "main"\n')
+                     '\npath = "providers/gemini-flash-lite"\nref = "main"\n'
+                     '\n[[provider_imports]]\nid = "gemini-flash"\ngit = ' + json.dumps(str(source)) +
+                     '\npath = "providers/gemini-flash"\nref = "main"\n')
     run([str(executable), "sync", "--yes"], cwd=consumer, env=env)
     assert not (consumer / ".please/providers/gemini-flash-lite.toml").exists()
     assert not (consumer / ".please/adapters").exists()

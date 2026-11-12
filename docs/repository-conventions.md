@@ -31,10 +31,16 @@ without it. The advisory `agents-quality` Review runs only at `check` and only w
 file as context, excludes the Git diff and evaluates it against the rubric embedded in the
 [prompt](../rules/reviews/agents-quality/prompt.md): contradictions, ambiguous precedence,
 unexecutable or unverifiable instructions and unsafe directions. Optional improvements do
-not cause FAIL. It uses the same `gemini-flash-lite` provider and `GEMINI_API_KEY` as the
-wording Review, and [its adapter limits](#commit-messages) apply. FAIL and ERROR stay visible
-but never block; a missing key produces ERROR, never PASS. The deterministic `agents-size`
-Check runs first, and a failed Check prevents every Review.
+not cause FAIL. It needs its own provider import, `providers/gemini-flash`, besides
+`gemini-flash-lite`, and `GEMINI_API_KEY`. The
+[adapter](../providers/gemini-flash/adapter.py) serves the unstable free tier: the review
+lists two models (`gemini-3.8-flash`, `gemini-3.6-flash`) and starts with a random one. Each
+retry switches to the other model after a wait of 10, 20, 30 and 45 seconds, for at most five
+attempts. HTTP 429/500/502/503/504 and transient connection failures retry; other errors,
+invalid or truncated responses and a missing key give ERROR at once. There is no overall
+deadline (each request times out after 10 minutes), the output limit is 8192 tokens and
+redirects are rejected. FAIL and ERROR stay visible but never block. The deterministic
+`agents-size` Check runs first, and a failed Check prevents every Review.
 
 ## Commit messages
 
@@ -74,6 +80,12 @@ copy is needed in the consumer:
 id = "gemini-flash-lite"
 git = "https://github.com/christianpflugradt/please-behave-governance.git"
 path = "providers/gemini-flash-lite"
+ref = "<FULL_REVIEWED_COMMIT_SHA>"
+
+[[provider_imports]]
+id = "gemini-flash"
+git = "https://github.com/christianpflugradt/please-behave-governance.git"
+path = "providers/gemini-flash"
 ref = "<FULL_REVIEWED_COMMIT_SHA>"
 ```
 

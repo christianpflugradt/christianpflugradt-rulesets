@@ -4,12 +4,12 @@ description = "Evaluate actionable coding-agent guidance in AGENTS.md against a 
 blocking = false
 
 [review]
-provider = "gemini-flash-lite"
+provider = "gemini-flash"
 prompt = "prompt.md"
 include_diff = false
 
 [review.parameters]
-model = "gemini-3.5-flash-lite"
+models = "gemini-3.8-flash,gemini-3.6-flash"
 
 [[review.context]]
 path = "AGENTS.md"
