@@ -57,6 +57,7 @@ def integration(root, executable):
     consumer.mkdir()
     shutil.copytree(ROOT / "rules", source / "rules")
     shutil.copytree(ROOT / "rulesets", source / "rulesets")
+    shutil.copytree(ROOT / "scripts", source / "scripts", ignore=shutil.ignore_patterns("__pycache__"))
     env = {k: v for k, v in os.environ.items() if not k.startswith("PLEASE_")}
     env.update(XDG_CACHE_HOME=str(root / "cache"), NO_COLOR="1", GEMINI_API_KEY="synthetic-key",
                GIT_CONFIG_GLOBAL=os.devnull, GIT_CONFIG_NOSYSTEM="1", PYTHONDONTWRITEBYTECODE="1")
