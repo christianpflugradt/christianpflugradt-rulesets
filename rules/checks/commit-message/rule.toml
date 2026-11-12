@@ -9,4 +9,4 @@ required = true
 description = "Repository-specific list of allowed commit scopes"
 
 [check]
-command = "sh @rule/index.sh"
+command = "python3 @rule/check.py @context @param/scopes_file"

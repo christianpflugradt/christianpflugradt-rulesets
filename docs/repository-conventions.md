@@ -33,8 +33,8 @@ an entry in the consuming project's scope file. Each file contains one exact,
 case-sensitive value per line. The type list includes `config`.
 Body and footer contents are not inspected.
 
-The check needs POSIX `sh`, `dirname` and `grep`. Please Behave supplies the commit-message
-file through `PLEASE_GIT_HOOK_ARG_1`, together with the `commit-msg` hook context.
+The check needs Python 3.9+. It reads the commit-message file path from the
+`commit-msg` run context, which Please Behave passes as `@context`.
 Missing context, files or required parameters produce ERROR (exit 2); invalid
 headers produce FAIL (exit 1); accepted headers produce PASS (exit 0).
 

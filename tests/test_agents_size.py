@@ -7,6 +7,9 @@ import sys
 import tempfile
 import unittest
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from context import write_context  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "rules/checks/agents-size/check.py"
 spec = importlib.util.spec_from_file_location("agents_size", SCRIPT)
@@ -50,10 +53,10 @@ class RuleTests(unittest.TestCase):
         self.git("commit", "--quiet", "-m", "test: record")
 
     def run_rule(self, point="check", expected=0, limit="5"):
-        env = dict(self.env, PLEASE_EXECUTION_POINT=point)
+        arguments = [write_context(self.temp.name, point)]
         if limit is not None:
-            env["PLEASE_PARAM_MAX_TOKENS"] = limit
-        result = subprocess.run([sys.executable, str(SCRIPT)], cwd=self.repo, env=env,
+            arguments.append(limit)
+        result = subprocess.run([sys.executable, str(SCRIPT), *arguments], cwd=self.repo, env=self.env,
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
         return result
@@ -97,7 +100,7 @@ class RuleTests(unittest.TestCase):
         (self.repo / "AGENTS.md").symlink_to("README")
         self.run_rule(expected=2)
 
-    def test_custom_points_need_an_explicit_snapshot(self):
+    def test_custom_points_are_unsupported(self):
         self.run_rule("release", 2)
 
 

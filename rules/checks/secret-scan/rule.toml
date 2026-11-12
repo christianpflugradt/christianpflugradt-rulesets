@@ -4,9 +4,5 @@ enabled = true
 blocking = true
 
 [check]
-command = "sh @rule/index.sh"
+command = "python3 @rule/check.py @context"
 timeout_seconds = 120
-
-[parameters.snapshot]
-type = "string"
-description = "Explicit head or worktree snapshot at custom execution points"

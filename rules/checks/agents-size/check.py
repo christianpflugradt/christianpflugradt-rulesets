@@ -1,5 +1,4 @@
 """Limit the approximate token count of the root AGENTS.md."""
-import os
 from pathlib import Path
 import re
 import stat
@@ -12,6 +11,11 @@ sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
 
 TARGET = "AGENTS.md"
+
+
+def require_arguments(count):
+    if len(sys.argv) != count + 1:
+        raise ValueError(f"expected {count} arguments: context file and max_tokens")
 
 
 def count_tokens(text):
@@ -51,10 +55,11 @@ def read_target(selected):
 
 
 def main():
-    from snapshot import select_snapshot
-    limit = parse_limit(os.environ.get("PLEASE_PARAM_MAX_TOKENS"))
-    point = os.environ.get("PLEASE_EXECUTION_POINT")
-    content = read_target(select_snapshot())
+    from snapshot import execution_point, select_snapshot
+    require_arguments(2)
+    point = execution_point(sys.argv[1])
+    limit = parse_limit(sys.argv[2])
+    content = read_target(select_snapshot(point))
     if content is None:
         print(f"PASS: {TARGET} is absent; nothing to limit ({point})")
         return 0

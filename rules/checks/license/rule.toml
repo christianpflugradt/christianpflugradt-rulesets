@@ -2,12 +2,8 @@ id = "license"
 description = "Require a license matching an approved reference byte-for-byte"
 
 [check]
-command = "python3 @source/scripts/file-reference.py"
+command = "python3 @source/scripts/file-reference.py @context @param/target @rule/licenses"
 
 [parameters.target]
 type = "string"
 required = true
-
-[parameters.snapshot]
-type = "string"
-description = "Explicit head or worktree snapshot at custom execution points"

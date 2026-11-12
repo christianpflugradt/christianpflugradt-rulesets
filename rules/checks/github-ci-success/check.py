@@ -179,9 +179,9 @@ def verify(policy, env, head, api):
                 url=f"https://github.com/{repo}/actions/runs/{run['id']}")
 
 
-def main():
+def main(policy_file):
     try:
-        policy = policy_from(os.environ["PLEASE_PARAM_POLICY"])
+        policy = policy_from(policy_file)
         result = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=15, check=True)
         evidence = verify(policy, os.environ, result.stdout.strip(), GitHub(os.environ.get("GITHUB_TOKEN")))
         print("PASS: " + json.dumps(evidence, sort_keys=True))
@@ -197,7 +197,9 @@ def main():
 
 if __name__ == "__main__":
     try:
-        sys.exit(main())
+        if len(sys.argv) != 2:
+            raise ValueError("expected one argument: policy file")
+        sys.exit(main(sys.argv[1]))
     except Exception as exc:  # A crash is a technical failure, never a FAIL verdict.
         print(f"ERROR: unexpected {type(exc).__name__}", file=sys.stderr)
         sys.exit(2)

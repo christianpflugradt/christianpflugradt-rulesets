@@ -4,9 +4,13 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from context import write_context  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("release_contract", ROOT / "rules/checks/release-contract/check.py")
@@ -43,21 +47,19 @@ class ReleaseContractTests(unittest.TestCase):
         self.assertEqual(data["run_attempt"], "2")
 
     def test_readiness_resolves_the_reusable_ci_rule_after_relocation(self):
-        env = dict(PLEASE_EXECUTION_POINT="release-readiness", PLEASE_PARAM_CI_POLICY="ci.json")
+        context = write_context(".", "release-readiness")
         def load_ci(path):
             self.assertEqual(Path(path), ROOT / "rules/checks/github-ci-success/check.py")
             self.assertTrue(Path(path).is_file())
-            self.assertEqual(os.environ["PLEASE_PARAM_POLICY"], "ci.json")
-            return {"main": lambda: 2}
-        with patch.dict(os.environ, env), patch.object(mod.runpy, "run_path", side_effect=load_ci):
-            self.assertEqual(mod.main(), 2)
+            return {"main": lambda policy: 2 if policy == "ci.json" else 0}
+        with patch.object(mod.runpy, "run_path", side_effect=load_ci):
+            self.assertEqual(mod.main(context, "ci.json", "unused.json"), 2)
 
     def test_successful_workflow_verification_exports_the_cached_publication_guard(self):
         Path("policy.json").write_text(json.dumps(POLICY))
-        env = dict(ENV, PLEASE_EXECUTION_POINT="release-verify",
-                   PLEASE_PARAM_ARTIFACTS_POLICY="policy.json", GITHUB_ENV="environment")
+        env = dict(ENV, GITHUB_ENV="environment")
         with patch.dict(os.environ, env), patch.object(mod.subprocess, "check_output", return_value=SHA):
-            self.assertEqual(mod.main(), 0)
+            self.assertEqual(mod.main(write_context(".", "release-verify"), "unused.json", "policy.json"), 0)
         exported = Path("environment").read_text()
         self.assertIn(f"PLEASE_RELEASE_GUARD={ROOT / 'scripts/release-guard.mjs'}\n", exported)
         self.assertIn("PLEASE_RELEASE_REPOSITORY=please-behave/cli\n", exported)

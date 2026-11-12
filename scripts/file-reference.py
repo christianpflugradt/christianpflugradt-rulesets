@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Compare a repository file byte-for-byte with rule-local reference files."""
-import os
 from pathlib import Path
 import stat
 import subprocess
@@ -18,19 +17,17 @@ def error(message):
 
 
 def main():
-    from snapshot import select_snapshot
-    rule_value = os.environ.get("PLEASE_RULE_DIRECTORY")
-    target = os.environ.get("PLEASE_PARAM_TARGET")
-    point = os.environ.get("PLEASE_EXECUTION_POINT", "check")
-    if not rule_value or not target:
-        return error("PLEASE_RULE_DIRECTORY and PLEASE_PARAM_TARGET are required")
+    from snapshot import execution_point, select_snapshot
+    if len(sys.argv) != 4:
+        return error("expected arguments: context file, target and licenses directory")
+    context_file, target, licenses = sys.argv[1:]
     relative = Path(target)
     if relative.is_absolute() or not relative.parts or ".." in relative.parts:
         return error("target must be a repository-relative path without traversal")
     try:
-        selected = select_snapshot("check")
+        selected = select_snapshot(execution_point(context_file))
         root = Path.cwd().resolve()
-        refs = Path(rule_value).resolve() / "licenses"
+        refs = Path(licenses).resolve()
         if not refs.is_dir():
             return error("rule-local licenses directory is missing")
         candidates = sorted(p for p in refs.iterdir()
@@ -50,7 +47,7 @@ def main():
             if result.returncode != 0:
                 return error(result.stderr.decode(errors="replace").strip())
             content = result.stdout
-        elif selected == "worktree":
+        else:
             path = root / relative
             try:
                 mode = path.lstat().st_mode
@@ -61,8 +58,6 @@ def main():
                 print(f"FAIL: {target} is missing or not a regular repository file")
                 return 1
             content = path.read_bytes()
-        else:
-            return error(f"unsupported execution point: {point}")
         for reference in candidates:
             if content == reference.read_bytes():
                 print(f"PASS: {target} matches {reference.name}")

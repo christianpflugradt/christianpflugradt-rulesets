@@ -10,8 +10,7 @@ change the allowlist. Whitespace, line endings and copyright notices must match.
 
 Requirements: Python 3.9+ and Git. The command
 `python3 @source/scripts/file-reference.py` runs the shared script from this
-repository root, while `PLEASE_RULE_DIRECTORY` still locates the Rule's license
-references.
+repository root, and `@rule/licenses` locates the Rule's license references.
 
 ```toml
 [[imports]]

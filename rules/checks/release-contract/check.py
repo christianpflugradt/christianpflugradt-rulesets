@@ -8,6 +8,10 @@ import runpy
 import subprocess
 import sys
 
+# Imported rule resources must remain immutable.
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
+
 
 def require(condition, message):
     if not condition:
@@ -122,15 +126,15 @@ def verify(policy, env, head):
         require(data == expected, f"Candidate identity or checksums differ: {target}")
 
 
-def main():
+def main(context_file, ci_policy_file, artifacts_policy_file):
+    from snapshot import execution_point
     try:
-        point = os.environ["PLEASE_EXECUTION_POINT"]
+        point = execution_point(context_file)
         if point == "release-readiness":
             script = Path(__file__).resolve().parents[1] / "github-ci-success/check.py"
-            os.environ["PLEASE_PARAM_POLICY"] = os.environ["PLEASE_PARAM_CI_POLICY"]
-            return runpy.run_path(str(script))["main"]()
+            return runpy.run_path(str(script))["main"](ci_policy_file)
         require(point in {"release-record", "release-verify"}, "Unexpected release execution point")
-        policy = policy_from(os.environ["PLEASE_PARAM_ARTIFACTS_POLICY"])
+        policy = policy_from(artifacts_policy_file)
         head = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True, timeout=15).strip()
         {"release-record": record, "release-verify": verify}[point](policy, os.environ, head)
         if point == "release-verify":
@@ -147,7 +151,9 @@ def main():
 
 if __name__ == "__main__":
     try:
-        sys.exit(main())
+        if len(sys.argv) != 4:
+            raise ValueError("expected arguments: context file, CI policy and artifacts policy")
+        sys.exit(main(*sys.argv[1:]))
     except Exception as exc:  # A crash is a technical failure, never a FAIL verdict.
         print(f"ERROR: unexpected {type(exc).__name__}", file=sys.stderr)
         sys.exit(2)

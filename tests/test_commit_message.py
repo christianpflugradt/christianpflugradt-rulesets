@@ -5,7 +5,11 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from context import write_context  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 RULE = ROOT / "rules/checks/commit-message"
@@ -22,8 +26,11 @@ def script_tests(root):
     scopes = root / "allowed scopes.txt"
     scopes.write_text("cli\nconfig\ndocs\n")
     env = {k: v for k, v in os.environ.items() if not k.startswith("PLEASE_")}
-    env.update(PLEASE_GIT_HOOK="commit-msg", PLEASE_GIT_HOOK_ARG_COUNT="1",
-               PLEASE_GIT_HOOK_ARG_1=str(message), PLEASE_PARAM_SCOPES_FILE=str(scopes))
+
+    def check(expected, point="commit-msg", context=None, scopes_file=scopes):
+        context = context or write_context(root, point, commit_message=dict(file=str(message)))
+        return run([sys.executable, str(RULE / "check.py"), context, str(scopes_file)], env=env, expected=expected)
+
     accepted = [f"{kind}: describe the change" for kind in (RULE / "commit-types.txt").read_text().splitlines()]
     accepted += ["feat(cli)!: change behavior", "fix!: change behavior", "docs: explain\n\nDetails."]
     rejected = ["", "\nfeat: hidden", "feat:", "feat: ", "feat: \t", "feat:no space",
@@ -32,22 +39,15 @@ def script_tests(root):
     for code, messages in [(0, accepted), (1, rejected)]:
         for text in messages:
             message.write_text(text)
-            run(["sh", str(RULE / "index.sh")], env=env, expected=code)
+            check(code)
     message.write_text("feat(cli): add command\n")
-    for key in ["PLEASE_GIT_HOOK", "PLEASE_GIT_HOOK_ARG_COUNT", "PLEASE_GIT_HOOK_ARG_1", "PLEASE_PARAM_SCOPES_FILE"]:
-        invalid = dict(env)
-        invalid.pop(key)
-        run(["sh", str(RULE / "index.sh")], env=invalid, expected=2)
-    for key in ["PLEASE_GIT_HOOK_ARG_1", "PLEASE_PARAM_SCOPES_FILE"]:
-        run(["sh", str(RULE / "index.sh")], env=dict(env, **{key: str(root / "missing")}), expected=2)
-    # A scanner/tool failure must not masquerade as a policy violation.
-    tools = root / "tools"
-    tools.mkdir()
-    grep = tools / "grep"
-    grep.write_text("#!/bin/sh\nexit 2\n")
-    grep.chmod(0o755)
-    run(["sh", str(RULE / "index.sh")], env=dict(env, PATH=str(tools) + os.pathsep + env["PATH"]), expected=2)
-    print(f"Script tests passed: {len(accepted) + len(rejected)} messages, missing context/resources and tool errors.")
+    check(2, point="pre-commit")
+    check(2, scopes_file=root / "missing")
+    check(2, context=write_context(root, "commit-msg", commit_message=dict(file=str(root / "missing"))))
+    check(2, context=write_context(root, "commit-msg"))
+    check(2, context=str(root / "missing.json"))
+    run([sys.executable, str(RULE / "check.py")], env=env, expected=2)
+    print(f"Script tests passed: {len(accepted) + len(rejected)} messages and missing context/resources.")
 
 
 def integration(root, executable):

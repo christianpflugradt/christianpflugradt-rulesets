@@ -84,9 +84,11 @@ def findings_from(report, status):
 
 
 def main():
-    from snapshot import select_snapshot
-    point = os.environ.get("PLEASE_EXECUTION_POINT")
-    selected = select_snapshot()
+    from snapshot import execution_point, select_snapshot
+    if len(sys.argv) != 2:
+        raise ValueError("expected one argument: context file")
+    point = execution_point(sys.argv[1])
+    selected = select_snapshot(point)
     scanner = shutil.which("gitleaks")
     if scanner is None:
         raise RuntimeError("gitleaks is not installed or is not on PATH")

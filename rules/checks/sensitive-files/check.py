@@ -25,17 +25,17 @@ def command(*args):
 
 
 def main():
-    from snapshot import select_snapshot
-    point = os.environ.get("PLEASE_EXECUTION_POINT")
-    selected = select_snapshot()
+    from snapshot import execution_point, select_snapshot
+    if len(sys.argv) != 2:
+        raise ValueError("expected one argument: context file")
+    point = execution_point(sys.argv[1])
+    selected = select_snapshot(point)
     if selected == "worktree":
         raw = command("git", "ls-files", "-z", "--cached", "--others", "--exclude-standard")
         paths = {os.fsdecode(path) for path in raw.split(b"\0") if path and os.path.lexists(os.fsdecode(path))}
-    elif selected == "head":
+    else:
         raw = command("git", "ls-tree", "-rz", "--name-only", "HEAD")
         paths = {os.fsdecode(path) for path in raw.split(b"\0") if path}
-    else:
-        raise RuntimeError(f"unsupported execution point: {point!r}")
     blocked = sorted(path for path in paths if prohibited(path))
     for path in blocked:
         print(f"FAIL: prohibited sensitive file {ascii(path)}")

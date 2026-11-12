@@ -48,8 +48,9 @@ its documented preset URL uses the renamed repository.
 
 ## Historical runtime compatibility
 
-This revision uses the Please Behave `PLEASE_*` runtime environment and `.please/`
-configuration. Existing Hannes consumers must retain the last compatible full
+This revision requires Please Behave 0.8.0 or later: checks receive their inputs as
+arguments (`@context`, `@param/<name>`) and no `PLEASE_*` environment. Earlier
+governors need an earlier pin. It uses `.please/` configuration. Existing Hannes consumers must retain the last compatible full
 commit pin `86c1a09519de6e848e6f8a0110427ca8d136dd1c`. Historical pins remain usable.
 For a runtime-only migration without wording reviews, published Please Behave
 v0.1.0+ and pin `4825ec7d61ea01bd40cef3a126f107ef924f1666` retain the former

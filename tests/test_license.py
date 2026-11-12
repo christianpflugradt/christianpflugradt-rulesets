@@ -11,6 +11,9 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from context import write_context  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 RULE = ROOT / "rules/checks/license"
 SCRIPT = ROOT / "scripts/file-reference.py"
@@ -28,8 +31,7 @@ class LicenseTests(unittest.TestCase):
         self.repo = self.base / "consumer"
         self.repo.mkdir()
         self.env = {k: v for k, v in os.environ.items() if not k.startswith("PLEASE_")}
-        self.env.update(PLEASE_RULE_DIRECTORY=str(RULE), PLEASE_PARAM_TARGET="LICENSE",
-                        XDG_CACHE_HOME=str(self.base / "cache"), NO_COLOR="1")
+        self.env.update(XDG_CACHE_HOME=str(self.base / "cache"), NO_COLOR="1")
         self.git("init", "--quiet", "--initial-branch=main")
         (self.repo / "README").write_text("Consumer\n")
         self.commit()
@@ -43,10 +45,10 @@ class LicenseTests(unittest.TestCase):
         self.git("add", ".")
         self.git("commit", "--quiet", "-m", "test: record license")
 
-    def rule(self, point="check", expected=0, **extra):
-        result = subprocess.run([sys.executable, str(SCRIPT)], cwd=self.repo,
-                                env=dict(self.env, PLEASE_EXECUTION_POINT=point, **extra),
-                                capture_output=True, text=True)
+    def rule(self, point="check", expected=0, target="LICENSE", licenses=None, **env):
+        result = subprocess.run([sys.executable, str(SCRIPT), write_context(self.base, point), target,
+                                 str(RULE / "licenses" if licenses is None else licenses)], cwd=self.repo,
+                                env=dict(self.env, **env), capture_output=True, text=True)
         self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
         self.assertIn({0: "PASS:", 1: "FAIL:", 2: "ERROR:"}[expected], result.stdout + result.stderr)
         return result
@@ -81,17 +83,6 @@ class LicenseTests(unittest.TestCase):
         self.rule(expected=1)
         self.rule("pre-push")
 
-    def test_custom_snapshots_preserve_builtin_semantics(self):
-        shutil.copyfile(RULE / "licenses/Unlicense.txt", self.repo / "LICENSE")
-        self.commit()
-        (self.repo / "LICENSE").write_text("uncommitted invalid license")
-        self.rule("release-readiness", PLEASE_PARAM_SNAPSHOT="head")
-        self.rule("release-readiness", 1, PLEASE_PARAM_SNAPSHOT="worktree")
-        self.rule("release-readiness", 2)
-        self.rule("release-readiness", 2, PLEASE_PARAM_SNAPSHOT="invalid")
-        self.rule("check", 2, PLEASE_PARAM_SNAPSHOT="head")
-        self.rule("pre-push", 2, PLEASE_PARAM_SNAPSHOT="worktree")
-
     def test_nonregular_consumer_files_fail(self):
         (self.repo / "LICENSE").symlink_to(RULE / "licenses/Unlicense.txt")
         self.commit()
@@ -100,15 +91,14 @@ class LicenseTests(unittest.TestCase):
 
     def test_bad_context_and_missing_references_are_errors(self):
         self.rule("unsupported", 2)
-        for extra in ({"PLEASE_PARAM_TARGET": ""}, {"PLEASE_RULE_DIRECTORY": ""},
-                      {"PLEASE_PARAM_TARGET": "../LICENSE"}, {"PLEASE_PARAM_TARGET": "/LICENSE"},
-                      {"PLEASE_RULE_DIRECTORY": str(self.base)}):
+        self.rule("release-readiness", 2)
+        for extra in ({"target": ""}, {"target": "../LICENSE"}, {"target": "/LICENSE"}):
             with self.subTest(extra=extra):
                 self.rule(expected=2, **extra)
         (self.base / "licenses").mkdir()
         (self.base / "licenses/.hidden").write_text("not a reference")
         (self.base / "licenses/link").symlink_to(RULE / "licenses/Unlicense.txt")
-        self.rule(expected=2, PLEASE_RULE_DIRECTORY=str(self.base))
+        self.rule(expected=2, licenses=self.base / "licenses")
 
     def test_git_failures_are_errors(self):
         self.rule("pre-push", 2, PATH=str(self.base))
@@ -118,13 +108,15 @@ class LicenseTests(unittest.TestCase):
         self.rule("pre-push", 2)  # Unborn HEAD is a technical failure, not a missing license.
 
     def test_io_and_git_read_errors_are_errors(self):
-        with patch.dict(os.environ, self.env, clear=True), patch("sys.stderr", new_callable=io.StringIO):
+        argv = ["file-reference.py", write_context(self.base, "check"), "LICENSE", str(RULE / "licenses")]
+        pushed = [argv[0], write_context(self.base, "pre-push"), *argv[2:]]
+        with patch.object(sys, "argv", argv), patch("sys.stderr", new_callable=io.StringIO):
             with patch.object(Path, "iterdir", side_effect=PermissionError("unreadable references")):
                 self.assertEqual(mod.main(), 2)
             with patch.object(Path, "read_bytes", side_effect=PermissionError("unreadable license")):
                 with patch.object(Path, "lstat", return_value=os.stat(SCRIPT)):
                     self.assertEqual(mod.main(), 2)
-            with patch.dict(os.environ, PLEASE_EXECUTION_POINT="pre-push"):
+            with patch.object(sys, "argv", pushed):
                 listing = subprocess.CompletedProcess([], 0, b"100644 blob abc\tLICENSE\0", b"")
                 failure = subprocess.CompletedProcess([], 128, b"", b"cannot read blob")
                 with patch.object(subprocess, "run", side_effect=[listing, failure]):

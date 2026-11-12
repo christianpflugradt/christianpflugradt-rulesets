@@ -8,6 +8,9 @@ import sys
 import tempfile
 import unittest
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from context import write_context  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 PLEASE = os.environ.get("PLEASE_EXECUTABLE") or shutil.which("please")
 GITLEAKS = os.environ.get("GITLEAKS_EXECUTABLE") or shutil.which("gitleaks")
@@ -62,8 +65,8 @@ class SecurityTests(unittest.TestCase):
 
     def rule(self, rule="secret-scan", point="check", expected=0, **extra):
         directory = ROOT / "rules/checks" / rule
-        return self.run_command(["sh", str(directory / "index.sh")], expected,
-            dict(self.env, PLEASE_RULE_DIRECTORY=str(directory), PLEASE_EXECUTION_POINT=point, **extra))
+        return self.run_command([sys.executable, str(directory / "check.py"), write_context(self.base, point)],
+                                expected, dict(self.env, **extra))
 
     def snapshot(self):
         return json.loads((self.base / "snapshot.json").read_text())
@@ -138,11 +141,7 @@ class SecurityTests(unittest.TestCase):
 
     def test_missing_gitleaks_is_an_error(self):
         (self.bin / "gitleaks").unlink()
-        (self.bin / "python3").symlink_to(sys.executable)
-        self.env["PATH"] = str(self.bin)
-        directory = ROOT / "rules/checks/secret-scan"
-        self.run_command(["/bin/sh", str(directory / "index.sh")], 2,
-            dict(self.env, PLEASE_RULE_DIRECTORY=str(directory), PLEASE_EXECUTION_POINT="check"))
+        self.rule(expected=2, PATH=str(self.bin))
 
     def test_reports_and_scanner_failures_cannot_pass(self):
         cases = [(1, "[]"), (2, "[]"), (10, "[]"), (0, None), (0, ""),
@@ -178,30 +177,15 @@ class SecurityTests(unittest.TestCase):
         self.git("add", "-f", ".env.local")
         self.rule("sensitive-files", expected=1)
 
-    def test_custom_points_require_explicit_compatible_snapshots(self):
-        self.write(".env", "uncommitted")
-        self.write("safe.txt", "worktree")
+    def test_custom_points_are_unsupported(self):
         for name in ("secret-scan", "sensitive-files"):
             self.rule(name, "release-readiness", 2)
-            self.rule(name, "release-readiness", 2, PLEASE_PARAM_SNAPSHOT="invalid")
-            self.rule(name, "check", 2, PLEASE_PARAM_SNAPSHOT="head")
-            self.rule(name, "pre-push", 2, PLEASE_PARAM_SNAPSHOT="worktree")
-            self.rule(name, "release-readiness", PLEASE_PARAM_SNAPSHOT="head")
-        self.assertEqual(self.snapshot()["safe.txt"], "safe contents\n")
-        self.rule(point="release-readiness", PLEASE_PARAM_SNAPSHOT="worktree")
-        self.assertEqual(self.snapshot()["safe.txt"], "worktree")
-        self.rule("sensitive-files", "release-readiness", 1, PLEASE_PARAM_SNAPSHOT="worktree")
 
-    def test_missing_context_git_and_python_are_errors(self):
+    def test_missing_context_and_git_are_errors(self):
         for name in ("sensitive-files", "secret-scan"):
-            self.rule(name, "unsupported", 2)
             directory = ROOT / "rules/checks" / name
-            self.run_command(["sh", str(directory / "index.sh")], 2)
-            env = dict(self.env, PATH=str(self.bin), PLEASE_RULE_DIRECTORY=str(directory), PLEASE_EXECUTION_POINT="check")
-            self.run_command(["/bin/sh", str(directory / "index.sh")], 2, env)
-            (self.bin / "python3").symlink_to(sys.executable)
-            self.run_command(["/bin/sh", str(directory / "index.sh")], 2, env)
-            (self.bin / "python3").unlink()
+            self.run_command([sys.executable, str(directory / "check.py")], 2)
+            self.run_command([sys.executable, str(directory / "check.py"), str(self.base / "missing.json")], 2)
         self.git("update-ref", "-d", "HEAD")
         for name in ("sensitive-files", "secret-scan"):
             self.rule(name, "pre-push", 2)

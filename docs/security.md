@@ -31,10 +31,9 @@ See the scanner configuration and limitations below.
 
 ## Snapshot selection
 
-The security and license rules accept optional `snapshot = "head"` or
-`"worktree"`. At `check` the default is `worktree`; at `pre-push` it is `head`.
-A conflicting explicit selection is ERROR. Custom execution points require an
-explicit snapshot. Neither selection scans history.
+The security and license rules take the snapshot from the run context's execution
+point: `pre-commit` and `check` use `worktree`, `pre-push` uses `head`. Any other
+execution point is ERROR. Neither selection scans history.
 
 ## Scanner configuration and limitations
 

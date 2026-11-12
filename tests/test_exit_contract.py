@@ -11,7 +11,8 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 CHECKS = sorted(ROOT.glob("rules/checks/*/check.py")) + [ROOT / "scripts/file-reference.py"]
 SNAPSHOT_USERS = [ROOT / "rules/checks/agents-size/check.py", ROOT / "rules/checks/sensitive-files/check.py",
-                  ROOT / "rules/checks/secret-scan/check.py", ROOT / "scripts/file-reference.py"]
+                  ROOT / "rules/checks/secret-scan/check.py", ROOT / "rules/checks/release-contract/check.py",
+                  ROOT / "scripts/file-reference.py"]
 
 
 def guard_catches_exception(path):
@@ -38,10 +39,9 @@ class ExitContractTests(unittest.TestCase):
                     copy = Path(temporary) / path.relative_to(ROOT)
                     copy.parent.mkdir(parents=True)
                     shutil.copyfile(path, copy)
-                    env = {k: v for k, v in os.environ.items() if not k.startswith("PLEASE_")}
-                    env.update(PLEASE_EXECUTION_POINT="check", PLEASE_PARAM_MAX_TOKENS="1500",
-                               PLEASE_PARAM_TARGET="LICENSE", PYTHONDONTWRITEBYTECODE="1")
-                    result = subprocess.run([sys.executable, str(copy)], cwd=temporary, env=env,
+                    env = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
+                    arguments = ["context.json", "1500", "LICENSE", "x"]
+                    result = subprocess.run([sys.executable, str(copy), *arguments], cwd=temporary, env=env,
                                             capture_output=True, text=True)
                     self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
                     self.assertIn("ERROR", result.stderr)
