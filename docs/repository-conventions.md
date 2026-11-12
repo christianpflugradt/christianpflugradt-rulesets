@@ -1,8 +1,8 @@
 # Repository conventions
 
 The `rulesets/multi-point/repository-conventions` set runs at `pre-commit` and `check`
-and keeps its two commit rules at `commit-msg` through per-reference overrides. It requires a
-Please Behave release that supports them. It contains the `agents-size` Check, a deterministic
+and keeps its two commit rules at `commit-msg` through per-reference overrides. It requires
+Please Behave v0.6.0+. It contains the `agents-size` Check, a deterministic
 commit syntax Check and an advisory wording Review.
 
 ## AGENTS.md size
@@ -119,12 +119,9 @@ Redirects are rejected so the key is never forwarded to another endpoint. Non-su
 responses, blocked/truncated candidates, invalid/duplicate JSON and responses over 64 KiB produce ERROR.
 No raw API error text, credentials or prompts are printed. Authentication,
 network and availability failures remain visible as Review ERROR. The Review
-is temporarily non-blocking: wording FAIL and provider ERROR do not prevent a
-commit, while deterministic syntax failures still block. Initial live probing
-found HTTP 503 and empty-finding PASS responses for a revert header. Short retries
-and the v0.5.0 header schema address those technical cases. The integration is
-verified offline with the published governor; model judgment quality is not
-claimed to be established, so enforcement remains advisory.
+is advisory: wording FAIL and provider ERROR do not prevent a commit, while
+deterministic syntax failures still block. Model judgment quality is not claimed
+to be established.
 
 Please Behave sends only the header as review evidence, without body, diff,
 source files or HEAD. Findings use `source: "commit-header"`, `path: null`,

@@ -40,7 +40,7 @@ Imported source resources must remain immutable.
 
 ## Configuration
 
-Use published Please Behave v0.5.0+ for the complete catalog. Install dependencies
+Use published Please Behave v0.6.0+ for the complete catalog. Install dependencies
 explicitly; rules and providers never install tools. Pin each ruleset and provider
 import to a reviewed full Git commit, then run `please sync` to validate resources
 and confirm managed hook installation. Synchronization does not execute checks or

@@ -5,7 +5,7 @@ Extend `github>christianpflugradt/please-behave-governance:renovate-governor` in
 
 ```toml
 [tools]
-"github:please-behave/cli" = "0.5.1"
+"github:please-behave/cli" = "<exact published version>"
 ```
 
 Renovate's native mise manager tracks this entry using GitHub Releases. The shared
