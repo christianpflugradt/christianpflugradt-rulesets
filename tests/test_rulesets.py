@@ -42,7 +42,7 @@ class RulesetIntegrationTests(unittest.TestCase):
             git(source, "add", ".")
             git(source, "commit", "--quiet", "-m", "test: record canonical bundles")
             revision = git(source, "rev-parse", "HEAD").strip()
-            paths = ["rulesets/commit-msg/repository-conventions", "rulesets/multi-point/open-source-software",
+            paths = ["rulesets/multi-point/repository-conventions", "rulesets/multi-point/open-source-software",
                      "rulesets/multi-point/releasable-open-source-software", "rulesets/multi-point/security"]
             (consumer / ".please").mkdir()
             config = 'project = "Catalog fixture"\n[execution_points]\n'
@@ -51,6 +51,7 @@ class RulesetIntegrationTests(unittest.TestCase):
                 config += f'\n[[imports]]\ngit = {json.dumps(str(source))}\npath = "{path}"\nref = "{revision}"\n'
                 if path.endswith("repository-conventions"):
                     config += '[imports.rule_parameters.commit-message]\nscopes_file = ".commit-scopes"\n'
+                    config += '[imports.rule_parameters.agents-size]\nmax_tokens = "1500"\n'
                 elif path.endswith("/open-source-software"):
                     config += '[imports.rule_parameters.license]\ntarget = "LICENSE"\n'
                 elif path.endswith("releasable-open-source-software"):
@@ -72,9 +73,9 @@ class RulesetIntegrationTests(unittest.TestCase):
             run([PLEASE, "sync", "--yes"])
             source.rename(base / "offline-source")
             expected = {
-                "pre-commit": set(),
+                "pre-commit": {"agents-size"},
                 "commit-msg": {"commit-message", "commit-message-quality"},
-                "check": {"license", "secret-scan", "sensitive-files"},
+                "check": {"agents-size", "license", "secret-scan", "sensitive-files"},
                 "pre-push": {"license", "secret-scan", "sensitive-files"},
                 "release-readiness": {"release-contract"},
                 "release-record": {"release-contract"},

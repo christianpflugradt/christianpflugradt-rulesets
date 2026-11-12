@@ -5,8 +5,10 @@
 - Group rulesets by shared repository attributes and execution points. Extend an
   existing bundle when both match; do not create one ruleset per check.
 - Repository conventions apply to every repo: public/private, software,
-  documentation or personal coaching. Conventional Commits belong here; this
-  baseline must work through Git hooks without requiring CI or `check`.
+  documentation or personal coaching. Conventional Commits and the `AGENTS.md`
+  size limit belong here. Keep this baseline lightweight: it runs at `pre-commit`
+  and `check`, with commit rules overridden to `commit-msg`, and works through Git
+  hooks without requiring CI.
 - Open-source software adds approved licenses and aligned `ci.yml` quality
   assurance. A license check alone does not justify a separate ruleset.
 - Releasable open-source software adds aligned `release.yml` governance and

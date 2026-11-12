@@ -23,6 +23,12 @@ canonical paths; old aliases are not retained:
 | `multi-point/security` | `rulesets/multi-point/security` | Unchanged independent security bundle |
 | `release/readiness` | Retired | Legacy mixed bundle; full-commit pins retain it |
 
+`rulesets/commit-msg/repository-conventions` moved to
+`rulesets/multi-point/repository-conventions` when it gained the `agents-size` Check at
+`pre-commit` and `check`. It requires the required parameter `agents-size.max_tokens` and
+a Please Behave release supporting per-reference `run_at` overrides. Existing pins keep the
+previous layout and behavior; no consumer migration is part of this change.
+
 The retired readiness set combined CI proof, security and license checks. It is
 not an exact alias for the release contract. Any future migration must choose the
 applicable canonical bundles and explicitly review coverage and parameters.

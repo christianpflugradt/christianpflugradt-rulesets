@@ -1,7 +1,31 @@
 # Repository conventions
 
-The `rulesets/commit-msg/repository-conventions` set contains a deterministic syntax Check
-and an advisory wording Review at `commit-msg`. The Check accepts
+The `rulesets/multi-point/repository-conventions` set runs at `pre-commit` and `check`
+and keeps its two commit rules at `commit-msg` through per-reference overrides. It requires a
+Please Behave release that supports them. It contains the `agents-size` Check, a deterministic
+commit syntax Check and an advisory wording Review.
+
+## AGENTS.md size
+
+The blocking `agents-size` Check limits the root `AGENTS.md` by approximate tokens: each
+run of letters, digits or underscores and each other non-whitespace character counts once.
+This estimates context cost without a tokenizer; it is not a model token count. Size only is
+checked, never content. `pre-commit` and `check` read the working tree; the rule has no
+`pre-push` assignment, and `pre-push` would read `HEAD` if assigned. A missing file passes.
+The required string parameter `max_tokens` is a positive integer, without a default, so each
+repository states its own limit. Exceeding it returns FAIL (1); an invalid limit, unreadable,
+non-UTF-8 or non-regular file returns ERROR (2).
+
+```toml
+[imports.rule_parameters.agents-size]
+max_tokens = "1500"
+```
+
+When the Check blocks, shorten `AGENTS.md` instead of raising the limit.
+
+## Commit messages
+
+The commit Check and Review run at `commit-msg`. The Check accepts
 `<type>[optional scope][!]: <description>`
 with a nonblank description. Types come from
 `rules/checks/commit-message/commit-types.txt`; scopes, when present, must match
@@ -19,8 +43,11 @@ Add this import to the consuming project's `.please/config.toml`:
 ```toml
 [[imports]]
 git = "https://github.com/christianpflugradt/please-behave-governance.git"
-path = "rulesets/commit-msg/repository-conventions"
+path = "rulesets/multi-point/repository-conventions"
 ref = "<FULL_REVIEWED_COMMIT_SHA>"
+
+[imports.rule_parameters.agents-size]
+max_tokens = "1500"
 
 [imports.rule_parameters.commit-message]
 scopes_file = ".commit-scopes"
@@ -104,7 +131,7 @@ source files or HEAD. Findings use `source: "commit-header"`, `path: null`,
 `line: 1`; the CLI validates IDs, evidence and header stability. It rejects file
 citations and incomplete verdicts. No comparison with the actual change occurs.
 These rules do not inspect commit ranges or PR titles. The Review runs only at
-`commit-msg`, not in CI `check`, pre-push or release readiness.
+`commit-msg`, not in CI `check`, pre-push or release readiness. Only `agents-size` runs at `pre-commit` and `check`.
 
 A direct `please run --at commit-msg` or offline preview has no Git message
 argument and cannot run this set. Use a real Git commit/amend after setup, then

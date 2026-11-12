@@ -5,7 +5,7 @@ import os
 def select_snapshot(default_point=None):
     point = os.environ.get("PLEASE_EXECUTION_POINT", default_point)
     explicit = os.environ.get("PLEASE_PARAM_SNAPSHOT")
-    implicit = {"check": "worktree", "pre-push": "head"}.get(point)
+    implicit = {"pre-commit": "worktree", "check": "worktree", "pre-push": "head"}.get(point)
     if explicit is not None and explicit not in ("head", "worktree"):
         raise ValueError("snapshot must be head or worktree")
     if implicit:

@@ -75,8 +75,9 @@ def integration(root, executable):
     (consumer / ".commit-scopes").write_text("cli\n")
     (consumer / ".please/config.toml").write_text(
         f'project = "My_App"\n[[imports]]\ngit = {json.dumps(str(source))}\n'
-        'path = "rulesets/commit-msg/repository-conventions"\nref = "main"\n'
-        '[imports.rule_parameters.commit-message]\nscopes_file = ".commit-scopes"\n')
+        'path = "rulesets/multi-point/repository-conventions"\nref = "main"\n'
+        '[imports.rule_parameters.commit-message]\nscopes_file = ".commit-scopes"\n'
+        '[imports.rule_parameters.agents-size]\nmax_tokens = "1500"\n')
     # Provider packages are imported independently and execute from the cache.
     shutil.copytree(ROOT / "providers", source / "providers")
     package = source / "providers/gemini-flash-lite/provider.toml"

@@ -1,0 +1,13 @@
+id = "agents-size"
+description = "Limit AGENTS.md to a token budget approximated by words and punctuation marks"
+enabled = true
+blocking = true
+
+[check]
+command = "python3 @rule/check.py"
+timeout_seconds = 30
+
+[parameters.max_tokens]
+type = "string"
+required = true
+description = "Positive integer limit of words and punctuation marks in AGENTS.md"

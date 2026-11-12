@@ -7,12 +7,12 @@ that apply to a repository; each bundle adds to the others.
 
 | Ruleset path | Repository group | Execution points | Current rules |
 | --- | --- | --- | --- |
-| `rulesets/commit-msg/repository-conventions` | Every repository, public or private, software or otherwise | `commit-msg` | Conventional Commit syntax and advisory header wording |
+| `rulesets/multi-point/repository-conventions` | Every repository, public or private, software or otherwise | `pre-commit`, `check`; `commit-msg` for commit rules | `AGENTS.md` size limit, Conventional Commit syntax and advisory header wording |
 | `rulesets/multi-point/open-source-software` | Open-source software | `check`, `pre-push` | Approved license |
 | `rulesets/multi-point/releasable-open-source-software` | Releasable open-source software | `release-readiness`, `release-record`, `release-verify` | Exact-source CI proof, candidate evidence and publication guards |
 | `rulesets/multi-point/security` | Repositories adopting the security policy | `check`, `pre-push` | Sensitive filenames and secret scanning |
 
-Repository conventions need Git hooks, without requiring CI or a `check` point.
+Repository conventions stay lightweight and work through Git hooks alone; `check` adds the same size limit to CI.
 Security is a deliberate domain separation. License checking belongs to the
 open-source bundle. Aligned `ci.yml` and `release.yml` structure checks belong to
 the open-source and release bundles respectively, but are **not implemented yet**.
@@ -49,7 +49,7 @@ the Gemini and GitHub API operations themselves still require network access.
 
 | Bundle | Required consumer configuration | Tools and credentials |
 | --- | --- | --- |
-| Repository conventions | `commit-message.scopes_file`; independent `gemini-flash-lite` provider import | POSIX `sh`, `dirname`, `grep`; Python 3.9+ and `GEMINI_API_KEY` for wording |
+| Repository conventions | `agents-size.max_tokens`; `commit-message.scopes_file`; independent `gemini-flash-lite` provider import | POSIX `sh`, `dirname`, `grep`; Python 3.9+, Git and `GEMINI_API_KEY` for wording |
 | Open-source software | `license.target`, usually `LICENSE` | Python 3.9+, Git |
 | Releasable open-source software | Three declared custom points; `release-contract.ci_policy` and `.artifacts_policy` | Python 3.11+, Git, Node 24+ for the publication guard, GitHub Actions context and `GITHUB_TOKEN` |
 | Security | No required parameters at its assigned points | POSIX `sh`, Python 3.9+, Git, Gitleaks v8 with `gitleaks dir` |

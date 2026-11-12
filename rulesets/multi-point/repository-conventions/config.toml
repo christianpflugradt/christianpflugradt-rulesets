@@ -1,0 +1,8 @@
+id = "repository-conventions"
+description = "Lightweight repository conventions for local commits and CI"
+run_at = ["pre-commit", "check"]
+rules = [
+  "rules/checks/agents-size",
+  { id = "rules/checks/commit-message", run_at = ["commit-msg"] },
+  { id = "rules/reviews/commit-message-quality", run_at = ["commit-msg"] },
+]
