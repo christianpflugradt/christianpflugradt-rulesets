@@ -36,6 +36,7 @@ ERROR (2).
 - `workflows` runs `actionlint` on the repository's GitHub workflows. It needs `actionlint` on
   `PATH` and a `.github/workflows` directory; issues return FAIL, and a missing tool ERROR.
 - `shell` runs ShellCheck on every tracked `*.sh` file of the working tree, in any directory.
+  Scripts whose shebang names zsh are skipped because ShellCheck cannot analyze them.
   No scripts means PASS. Findings return FAIL; a missing tool or any other ShellCheck failure
   returns ERROR.
 - `npm-audit` runs `npm audit --audit-level=high` for the directory of each tracked

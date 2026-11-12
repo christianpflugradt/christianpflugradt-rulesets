@@ -48,6 +48,21 @@ class SharedChecksTests(unittest.TestCase):
         self.run_check(SHELL, 0)
         self.assertEqual((self.repo / "seen").read_text(), "a.sh nested/b.sh")
 
+    def test_shell_skips_zsh_scripts_which_shellcheck_cannot_analyze(self):
+        self.track("a.sh", "#!/bin/sh\n")
+        self.track("z.sh", "#!/usr/bin/env zsh\n")
+        self.track("zz.sh", "#!/bin/zsh\n")
+        self.tool("shellcheck", "import sys\nopen('seen','w').write(' '.join(sys.argv[2:]))\n")
+        self.run_check(SHELL, 0)
+        self.assertEqual((self.repo / "seen").read_text(), "a.sh")
+        self.track("only.sh", "#!/bin/zsh\n")
+        (self.repo / "a.sh").unlink()
+        subprocess.run(["git", "rm", "-q", "--cached", "a.sh"], cwd=self.repo, check=True)
+        subprocess.run(["git", "rm", "-q", "--cached", "z.sh", "zz.sh"], cwd=self.repo, check=True)
+        (self.repo / "seen").unlink()
+        self.run_check(SHELL, 0)
+        self.assertFalse((self.repo / "seen").exists())
+
     def test_shell_maps_findings_to_fail_and_tool_problems_to_error(self):
         self.track("a.sh")
         self.tool("shellcheck", "raise SystemExit(1)\n")

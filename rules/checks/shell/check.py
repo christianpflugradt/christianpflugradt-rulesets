@@ -1,7 +1,14 @@
-"""Run ShellCheck on all tracked *.sh files; no scripts means PASS."""
+"""Run ShellCheck on all tracked *.sh files except zsh scripts; no scripts means PASS."""
 import os
 import subprocess
 import sys
+
+
+def is_zsh(path):
+    """ShellCheck cannot analyze zsh, so scripts declaring it in their shebang are skipped."""
+    with open(path, "rb") as handle:
+        first = handle.readline(256)
+    return first.startswith(b"#!") and b"zsh" in first
 
 
 def main():
@@ -9,6 +16,7 @@ def main():
     if listed.returncode:
         raise RuntimeError("git ls-files failed")
     scripts = sorted(os.fsdecode(path) for path in listed.stdout.split(b"\0") if path and os.path.isfile(os.fsdecode(path)))
+    scripts = [path for path in scripts if not is_zsh(path)]
     if not scripts:
         print("PASS: no shell scripts to check")
         return 0
