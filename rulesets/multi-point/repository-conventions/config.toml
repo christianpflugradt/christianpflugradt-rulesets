@@ -5,4 +5,5 @@ rules = [
   "rules/checks/agents-size",
   { id = "rules/checks/commit-message", run_at = ["commit-msg"] },
   { id = "rules/reviews/commit-message-quality", run_at = ["commit-msg"] },
+  { id = "rules/reviews/agents-quality", run_at = ["check"] },
 ]

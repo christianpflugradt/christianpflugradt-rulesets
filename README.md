@@ -40,7 +40,7 @@ Imported source resources must remain immutable.
 
 ## Configuration
 
-Use published Please Behave v0.6.0+ for the complete catalog. Install dependencies
+Use published Please Behave 0.8.0 or later for the complete catalog. Install dependencies
 explicitly; rules and providers never install tools. Pin each ruleset and provider
 import to a reviewed full Git commit, then run `please sync` to validate resources
 and confirm managed hook installation. Synchronization does not execute checks or
@@ -49,12 +49,12 @@ the Gemini and GitHub API operations themselves still require network access.
 
 | Bundle | Required consumer configuration | Tools and credentials |
 | --- | --- | --- |
-| Repository conventions | `agents-size.max_tokens`; `commit-message.scopes_file`; independent `gemini-flash-lite` provider import | Python 3.9+, Git and `GEMINI_API_KEY` for wording |
+| Repository conventions | `agents-size.max_tokens`; `commit-message.scopes_file`; independent `gemini-flash-lite` provider import | Python 3.9+, Git and `GEMINI_API_KEY` for the wording and `AGENTS.md` reviews |
 | Open-source software | `license.target`, usually `LICENSE` | Python 3.9+, Git |
 | Releasable open-source software | Three declared custom points; `release-contract.ci_policy` and `.artifacts_policy` | Python 3.11+, Git, Node 24+ for the publication guard, GitHub Actions context and `GITHUB_TOKEN` |
 | Security | No required parameters at its assigned points | Python 3.9+, Git, Gitleaks v8 with `gitleaks dir` |
 
-The wording Review is advisory; its FAIL and ERROR results remain visible without
+The wording and `AGENTS.md` quality Reviews are advisory; its FAIL and ERROR results remain visible without
 blocking commits. Deterministic checks are blocking. Security and license checks
 inspect the working tree at `check` and `HEAD` at `pre-push`, without Git history
 or every pushed ref. Technical failures never establish PASS.

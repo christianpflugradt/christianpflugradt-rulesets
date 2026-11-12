@@ -60,6 +60,7 @@ class RulesetIntegrationTests(unittest.TestCase):
                        f'git = {json.dumps(str(source))}\npath = "providers/gemini-flash-lite"\nref = "{revision}"\n')
             (consumer / ".please/config.toml").write_text(config)
             (consumer / ".commit-scopes").write_text("docs\n")
+            (consumer / "AGENTS.md").write_text("# Agents\n")
             (consumer / ".gitignore").write_text(".please/reports/\ndist/\nrelease-evidence/\nenvironment\n")
             shutil.copyfile(ROOT / "rules/checks/license/licenses/Unlicense.txt", consumer / "LICENSE")
             (consumer / "ci.json").write_text("{}")
@@ -72,6 +73,8 @@ class RulesetIntegrationTests(unittest.TestCase):
             git(consumer, "commit", "--quiet", "-m", "test: record consumer")
             run([PLEASE, "sync", "--yes"])
             source.rename(base / "offline-source")
+            # Triggered reviews require an explicit baseline; HEAD means no changed files.
+            env["PLEASE_CHANGE_BASE"] = git(consumer, "rev-parse", "HEAD").strip()
             expected = {
                 "pre-commit": {"agents-size"},
                 "commit-msg": {"commit-message", "commit-message-quality"},

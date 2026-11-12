@@ -2,8 +2,8 @@
 
 The `rulesets/multi-point/repository-conventions` set runs at `pre-commit` and `check`
 and keeps its two commit rules at `commit-msg` through per-reference overrides. It requires
-Please Behave v0.6.0+. It contains the `agents-size` Check, a deterministic
-commit syntax Check and an advisory wording Review.
+Please Behave 0.8.0 or later. It contains the `agents-size` Check, a deterministic
+commit syntax Check, an advisory wording Review and an advisory `AGENTS.md` quality Review.
 
 ## AGENTS.md size
 
@@ -22,6 +22,19 @@ max_tokens = "1500"
 ```
 
 When the Check blocks, shorten `AGENTS.md` instead of raising the limit.
+
+## AGENTS.md quality
+
+The bundle requires a root `AGENTS.md`: the review names it as context, so `please sync` fails
+without it. The advisory `agents-quality` Review runs only at `check` and only when `AGENTS.md` changed
+(`review.trigger`), so an unchanged file never causes a model call. It supplies the whole
+file as context, excludes the Git diff and evaluates it against the rubric embedded in the
+[prompt](../rules/reviews/agents-quality/prompt.md): contradictions, ambiguous precedence,
+unexecutable or unverifiable instructions and unsafe directions. Optional improvements do
+not cause FAIL. It uses the same `gemini-flash-lite` provider and `GEMINI_API_KEY` as the
+wording Review, and [its adapter limits](#commit-messages) apply. FAIL and ERROR stay visible
+but never block; a missing key produces ERROR, never PASS. The deterministic `agents-size`
+Check runs first, and a failed Check prevents every Review.
 
 ## Commit messages
 

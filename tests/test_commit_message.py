@@ -74,6 +74,7 @@ def integration(root, executable):
     git(source, "commit", "--quiet", "-m", "feat: add rule set")
     (consumer / ".please").mkdir()
     (consumer / ".commit-scopes").write_text("cli\n")
+    (consumer / "AGENTS.md").write_text("# Agents\n")
     (consumer / ".please/config.toml").write_text(
         f'project = "My_App"\n[[imports]]\ngit = {json.dumps(str(source))}\n'
         'path = "rulesets/multi-point/repository-conventions"\nref = "main"\n'
