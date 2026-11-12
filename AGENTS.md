@@ -30,7 +30,9 @@
   usage in `docs/`. Update definitions, tests and documentation together.
 - Commands run in the consumer root. Resolve imported resources explicitly;
   never modify the immutable source cache or install dependencies during checks.
-- Preserve PASS/FAIL/ERROR distinctions. Provider, tooling and evidence failures
+- Preserve PASS/FAIL/ERROR distinctions. FAIL (exit 1) is only a verdict about the
+  checked subject; every crash, missing helper or tooling problem must exit 2
+  through a catch-all guard around the entry point. Provider, tooling and evidence failures
   must not become PASS. Keep credentials and private diagnostics out of output.
 
 ## Changes and compatibility

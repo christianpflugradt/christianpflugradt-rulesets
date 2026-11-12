@@ -10,7 +10,6 @@ import sys
 # Imported rule resources must remain immutable.
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
-from snapshot import select_snapshot
 
 TARGET = "AGENTS.md"
 
@@ -52,6 +51,7 @@ def read_target(selected):
 
 
 def main():
+    from snapshot import select_snapshot
     limit = parse_limit(os.environ.get("PLEASE_PARAM_MAX_TOKENS"))
     point = os.environ.get("PLEASE_EXECUTION_POINT")
     content = read_target(select_snapshot())
@@ -71,4 +71,7 @@ if __name__ == "__main__":
         sys.exit(main())
     except (OSError, RuntimeError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
+        sys.exit(2)
+    except Exception as exc:  # A crash is a technical failure, never a FAIL verdict.
+        print(f"ERROR: unexpected {type(exc).__name__}", file=sys.stderr)
         sys.exit(2)

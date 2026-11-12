@@ -196,4 +196,8 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Exception as exc:  # A crash is a technical failure, never a FAIL verdict.
+        print(f"ERROR: unexpected {type(exc).__name__}", file=sys.stderr)
+        sys.exit(2)

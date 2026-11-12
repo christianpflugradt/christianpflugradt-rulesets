@@ -8,7 +8,6 @@ import sys
 # Imported rule resources must remain immutable.
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
-from snapshot import select_snapshot
 
 
 def prohibited(path):
@@ -26,6 +25,7 @@ def command(*args):
 
 
 def main():
+    from snapshot import select_snapshot
     point = os.environ.get("PLEASE_EXECUTION_POINT")
     selected = select_snapshot()
     if selected == "worktree":
@@ -49,4 +49,7 @@ if __name__ == "__main__":
         sys.exit(main())
     except (OSError, RuntimeError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
+        sys.exit(2)
+    except Exception as exc:  # A crash is a technical failure, never a FAIL verdict.
+        print(f"ERROR: unexpected {type(exc).__name__}", file=sys.stderr)
         sys.exit(2)

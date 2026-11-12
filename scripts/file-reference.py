@@ -10,7 +10,6 @@ import sys
 # Imported rule resources must remain immutable.
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from snapshot import select_snapshot
 
 
 def error(message):
@@ -19,6 +18,7 @@ def error(message):
 
 
 def main():
+    from snapshot import select_snapshot
     rule_value = os.environ.get("PLEASE_RULE_DIRECTORY")
     target = os.environ.get("PLEASE_PARAM_TARGET")
     point = os.environ.get("PLEASE_EXECUTION_POINT", "check")
@@ -74,4 +74,8 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Exception as exc:  # A crash is a technical failure, never a FAIL verdict.
+        print(f"ERROR: unexpected {type(exc).__name__}", file=sys.stderr)
+        sys.exit(2)
