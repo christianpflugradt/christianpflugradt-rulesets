@@ -86,14 +86,14 @@ def config_violations(config, tag_format, exists):
                                           and REPOSITORY_URL.fullmatch(config["repositoryUrl"])):
         found.append("repositoryUrl must be a GitHub .git URL of the owning account")
     entries = config.get("plugins")
-    if not isinstance(entries, list) or len(entries) != 4:
-        return found + ["plugins must be exactly: analyzer, release notes generator, local verification plugin, GitHub"]
-    analyzer, notes, verification, github = (plugin(entry) for entry in entries)
+    if not isinstance(entries, list) or len(entries) < 3:
+        return found + ["plugins must be: analyzer, release notes generator, optional local plugins, GitHub"]
+    analyzer, notes, github = plugin(entries[0]), plugin(entries[1]), plugin(entries[-1])
 
     name, options = analyzer
     wrapper = local(name)
     if name != ANALYZER and not wrapper:
-        found.append(f"plugin 1 must be {ANALYZER} or a local wrapper (./path.mjs)")
+        found.append(f"the first plugin must be {ANALYZER} or a local wrapper (./path.mjs)")
     else:
         if wrapper and not exists(name[2:]):
             found.append(f"analyzer wrapper {name[2:]} is missing")
@@ -109,7 +109,7 @@ def config_violations(config, tag_format, exists):
 
     name, options = notes
     if name != NOTES:
-        found.append(f"plugin 2 must be {NOTES}")
+        found.append(f"the second plugin must be {NOTES}")
     else:
         if set(options) != {"preset", "parserOpts", "presetConfig"}:
             found.append("release notes options must be exactly preset, parserOpts and presetConfig")
@@ -121,15 +121,16 @@ def config_violations(config, tag_format, exists):
         if not (isinstance(preset, dict) and set(preset) == {"types"} and same_set(preset["types"], NOTE_TYPES)):
             found.append("release notes types must be exactly the shared sections")
 
-    name, options = verification
-    if not local(name) or options:
-        found.append("plugin 3 must be a local verification plugin given as a plain ./path.mjs")
-    elif not exists(name[2:]):
-        found.append(f"verification plugin {name[2:]} is missing")
+    for entry in entries[2:-1]:
+        name, options = plugin(entry)
+        if not local(name) or options:
+            found.append("plugins between the release notes generator and GitHub must be local, given as a plain ./path.mjs")
+        elif not exists(name[2:]):
+            found.append(f"local plugin {name[2:]} is missing")
 
     name, options = github
     if name != GITHUB:
-        found.append(f"plugin 4 must be {GITHUB}")
+        found.append(f"the last plugin must be {GITHUB}")
     else:
         for key, value in GITHUB_REQUIRED.items():
             if options.get(key) is not value:

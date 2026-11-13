@@ -82,6 +82,15 @@ class ConfigTests(unittest.TestCase):
         wrapper["plugins"][0][1]["developmentSeries"] = True
         self.assertEqual(violations(wrapper, present=(PLUGIN[2:], "scripts/release-analyzer.mjs")), [])
 
+    def test_local_plugins_are_optional(self):
+        none = baseline()
+        none["plugins"].pop(2)
+        self.assertEqual(violations(none), [])
+        two = baseline()
+        two["plugins"].insert(2, "./other.mjs")
+        self.assertEqual(violations(two, present=(PLUGIN[2:], "other.mjs")), [])
+        self.assertEqual(len(violations(two)), 1)
+
     def test_rule_order_does_not_matter(self):
         config = baseline()
         config["plugins"][0][1]["releaseRules"].reverse()
@@ -119,8 +128,9 @@ class ConfigTests(unittest.TestCase):
             "parser": edit(lambda c: c["plugins"][0][1]["parserOpts"].update(revertPattern="/x/")),
             "preset": edit(lambda c: c["plugins"][1][1].update(preset="angular")),
             "extra plugin": edit(lambda c: c["plugins"].insert(3, "@semantic-release/git")),
-            "no verification plugin": edit(lambda c: c["plugins"].pop(2)),
-            "unknown verification plugin": edit(lambda c: c["plugins"].__setitem__(2, "./missing.mjs")),
+            "missing local plugin": edit(lambda c: c["plugins"].__setitem__(2, "./missing.mjs")),
+            "local plugin with options": edit(lambda c: c["plugins"].__setitem__(2, [PLUGIN, {"x": 1}])),
+            "too few plugins": edit(lambda c: c.update(plugins=c["plugins"][:2])),
             "github comments": edit(lambda c: c["plugins"][3][1].update(successComment=True)),
             "github options missing": edit(lambda c: c["plugins"].__setitem__(3, mod.GITHUB)),
             "plain analyzer options": edit(lambda c: c["plugins"][0][1].update(extra=1)),

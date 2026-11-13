@@ -91,7 +91,7 @@ class LicenseTests(unittest.TestCase):
 
     def test_bad_context_and_missing_references_are_errors(self):
         self.rule("unsupported", 2)
-        self.rule("release-readiness", 2)
+        self.rule("release", 2)
         for extra in ({"target": ""}, {"target": "../LICENSE"}, {"target": "/LICENSE"}):
             with self.subTest(extra=extra):
                 self.rule(expected=2, **extra)

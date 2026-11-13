@@ -19,7 +19,7 @@ canonical paths; old aliases are not retained:
 | --- | --- | --- |
 | `commit-msg/conventional-commits` | `rulesets/commit-msg/repository-conventions` | Universal conventions, unchanged syntax Check and advisory Review |
 | `repository-conventions`, `multi-point/license` | `rulesets/open-source-software` | License policy belongs to open-source software |
-| `release/releasable-project` | `rulesets/releasable-open-source-software` | Existing release contract, unchanged points and parameters |
+| `release/releasable-project` | `rulesets/releasable-open-source-software` | Now only the Semantic Release baseline; the release contract and its custom points were removed |
 | `multi-point/security` | `rulesets/security` | Unchanged independent security bundle |
 | `release/readiness` | Retired | Legacy mixed bundle; full-commit pins retain it |
 
@@ -33,17 +33,13 @@ the old layout.
 a Please Behave release supporting per-reference `run_at` overrides. Existing pins keep the
 previous layout and behavior; no consumer migration is part of this change.
 
-The retired readiness set combined CI proof, security and license checks. It is
-not an exact alias for the release contract. Any future migration must choose the
-applicable canonical bundles and explicitly review coverage and parameters.
-`github-ci-success` remains a reusable Rule and supplies the release contract's
-readiness implementation.
+The retired readiness set combined CI proof, security and license checks. It has no
+canonical replacement: release and build process verification is outside the scope of
+these bundles. Any migration must choose the applicable canonical bundles and
+explicitly review coverage and parameters.
 
 The Gemini provider path and ID stay `providers/gemini-flash-lite` and
 `gemini-flash-lite`; its adapter now lives in that package as `adapter.py`.
-The release contract still exports `PLEASE_RELEASE_GUARD` for consumers to load;
-its target now lives in `scripts/release-guard.mjs`. Consumers must use the
-exported path rather than hard-code source-layout details.
 
 Update pins and paths together only during an explicitly authorized migration.
 Revalidate parameters and plans with the published governor before adoption.

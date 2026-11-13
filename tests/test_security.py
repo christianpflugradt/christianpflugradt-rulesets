@@ -179,7 +179,7 @@ class SecurityTests(unittest.TestCase):
 
     def test_custom_points_are_unsupported(self):
         for name in ("secret-scan", "sensitive-files"):
-            self.rule(name, "release-readiness", 2)
+            self.rule(name, "release", 2)
 
     def test_missing_context_and_git_are_errors(self):
         for name in ("sensitive-files", "secret-scan"):

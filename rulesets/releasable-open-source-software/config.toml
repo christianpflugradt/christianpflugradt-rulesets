@@ -1,7 +1,4 @@
 id = "releasable-open-source-software"
-description = "Require the shared Semantic Release baseline, reuse trusted CI and bind release candidates to source and workflow attempts"
-run_at = ["pre-push", "check", "release-readiness", "release-record", "release-verify"]
-rules = [
-  { id = "rules/checks/semantic-release", run_at = ["pre-push", "check"] },
-  { id = "rules/checks/release-contract", run_at = ["release-readiness", "release-record", "release-verify"] },
-]
+description = "Require the shared Semantic Release baseline for releasable open-source software"
+run_at = ["pre-push", "check"]
+rules = ["rules/checks/semantic-release"]

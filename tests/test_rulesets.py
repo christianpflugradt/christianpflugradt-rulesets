@@ -13,7 +13,7 @@ PLEASE = os.environ.get("PLEASE_EXECUTABLE") or shutil.which("please")
 
 @unittest.skipUnless(PLEASE, "published Please Behave required")
 class RulesetIntegrationTests(unittest.TestCase):
-    def test_additive_bundles_and_cached_release_resources(self):
+    def test_additive_bundles_from_an_offline_cache(self):
         with tempfile.TemporaryDirectory(prefix="ruleset-catalog-") as temporary:
             base = Path(temporary)
             source, consumer = base / "source", base / "consumer"
@@ -45,8 +45,7 @@ class RulesetIntegrationTests(unittest.TestCase):
             paths = ["rulesets/repository-conventions", "rulesets/open-source-software",
                      "rulesets/releasable-open-source-software", "rulesets/security"]
             (consumer / ".please").mkdir()
-            config = 'project = "Catalog fixture"\n[execution_points]\n'
-            config += 'custom = ["release-readiness", "release-record", "release-verify"]\n'
+            config = 'project = "Catalog fixture"\n'
             for path in paths:
                 config += f'\n[[imports]]\ngit = {json.dumps(str(source))}\npath = "{path}"\nref = "{revision}"\n'
                 if path.endswith("repository-conventions"):
@@ -55,7 +54,6 @@ class RulesetIntegrationTests(unittest.TestCase):
                 elif path.endswith("/open-source-software"):
                     config += '[imports.rule_parameters.license]\ntarget = "LICENSE"\n'
                 elif path.endswith("releasable-open-source-software"):
-                    config += '[imports.rule_parameters.release-contract]\nci_policy = "ci.json"\nartifacts_policy = "artifacts.json"\n'
                     config += '[imports.rule_parameters.semantic-release]\ntag_format = "v${version}"\n'
             config += ('\n[[provider_imports]]\nid = "gemini-flash-lite"\n'
                        f'git = {json.dumps(str(source))}\npath = "providers/gemini-flash-lite"\nref = "{revision}"\n'
@@ -64,14 +62,8 @@ class RulesetIntegrationTests(unittest.TestCase):
             (consumer / ".please/config.toml").write_text(config)
             (consumer / ".commit-scopes").write_text("docs\n")
             (consumer / "AGENTS.md").write_text("# Agents\n")
-            (consumer / ".gitignore").write_text(".please/reports/\ndist/\nrelease-evidence/\nenvironment\n")
+            (consumer / ".gitignore").write_text(".please/reports/\n")
             shutil.copyfile(ROOT / "rules/checks/license/licenses/Unlicense.txt", consumer / "LICENSE")
-            (consumer / "ci.json").write_text("{}")
-            (consumer / "artifacts.json").write_text(json.dumps({
-                "schema_version": 1, "repository": "please-behave/cli",
-                "workflow": ".github/workflows/release.yml", "root": "dist",
-                "targets": {"linux": ["app-{version}"]},
-            }))
             git(consumer, "add", ".")
             git(consumer, "commit", "--quiet", "-m", "test: record consumer")
             run([PLEASE, "sync", "--yes"])
@@ -84,9 +76,6 @@ class RulesetIntegrationTests(unittest.TestCase):
                 "check": {"agents-size", "editorconfig", "license", "workflows", "shell", "npm-audit", "secret-scan", "sensitive-files",
                           "semantic-release"},
                 "pre-push": {"license", "workflows", "shell", "secret-scan", "sensitive-files", "semantic-release"},
-                "release-readiness": {"release-contract"},
-                "release-record": {"release-contract"},
-                "release-verify": {"release-contract"},
             }
             for point, rules in expected.items():
                 with self.subTest(point=point):
@@ -98,22 +87,6 @@ class RulesetIntegrationTests(unittest.TestCase):
                     if point == "commit-msg":
                         self.assertEqual(plan["blocking_reasons"], [
                             "Cannot prepare review input: commit-header review requires the managed commit-msg hook"])
-            env.update(GITHUB_SHA=git(consumer, "rev-parse", "HEAD").strip(),
-                       GITHUB_REF="refs/heads/main", GITHUB_REPOSITORY="please-behave/cli",
-                       GITHUB_WORKFLOW_REF="please-behave/cli/.github/workflows/release.yml@refs/heads/main",
-                       GITHUB_RUN_ID="12", GITHUB_RUN_ATTEMPT="1", RELEASE_TARGET="linux",
-                       EXPECTED_RELEASE_VERSION="1.2.3", GITHUB_ENV=str(consumer / "environment"))
-            (consumer / "dist").mkdir()
-            artifact = consumer / "dist/app-1.2.3"
-            artifact.write_bytes(b"tested candidate")
-            run([PLEASE, "run", "--at", "release-record"])
-            run([PLEASE, "run", "--at", "release-verify"])
-            exports = (consumer / "environment").read_text().splitlines()
-            guard = Path(next(line.split("=", 1)[1] for line in exports if line.startswith("PLEASE_RELEASE_GUARD=")))
-            self.assertTrue(guard.is_file())
-            self.assertTrue(guard.as_posix().endswith("/scripts/release-guard.mjs"))
-            artifact.write_bytes(b"altered candidate")
-            run([PLEASE, "run", "--at", "release-verify"], expected=2)
 
 
 if __name__ == "__main__":

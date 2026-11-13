@@ -2,6 +2,12 @@
 
 ## Policy boundaries
 
+- Read the Architectural Boundaries of the Please Behave
+  [product vision](https://github.com/please-behave/cli/blob/main/docs/product-vision.md)
+  before adding or changing a Rule or bundle.
+- Bundles use only the built-in execution points (`pre-commit`, `commit-msg`,
+  `pre-push`, `check`) and never declare custom points. `release` is the only custom
+  point; consumers declare it for their own rules.
 - Group rulesets by shared repository attributes and execution points. Extend an
   existing bundle when both match; do not create one ruleset per check.
 - Repository conventions apply to every repo: public/private, software,
@@ -9,10 +15,9 @@
   size limit belong here. Keep this baseline lightweight: it runs at `pre-commit`
   and `check`, with commit rules overridden to `commit-msg`, and works through Git
   hooks without requiring CI.
-- Open-source software adds approved licenses and aligned `ci.yml` quality
-  assurance. A license check alone does not justify a separate ruleset.
-- Releasable open-source software adds the Semantic Release baseline, aligned
-  `release.yml` governance and successful CI evidence for the release source SHA.
+- Open-source software adds approved licenses and the shared workflow-syntax, shell
+  and dependency-audit checks. A license check alone does not justify a separate ruleset.
+- Releasable open-source software adds the Semantic Release baseline.
 - Separate domains sparingly. Security is an intentional independent bundle for
   visibility; discuss other new boundaries before introducing them.
 - These are additive policy responsibilities. README distinguishes implemented

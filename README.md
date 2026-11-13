@@ -9,14 +9,12 @@ that apply to a repository; each bundle adds to the others.
 | --- | --- | --- | --- |
 | `rulesets/repository-conventions` | Every repository, public or private, software or otherwise | `pre-commit`, `check`; `commit-msg` for commit rules | `AGENTS.md` size limit, EditorConfig baseline, Conventional Commit syntax and advisory header wording |
 | `rulesets/open-source-software` | Open-source software | `check`, `pre-push` | Approved license |
-| `rulesets/releasable-open-source-software` | Releasable open-source software | `check`, `pre-push`; `release-readiness`, `release-record`, `release-verify` for release evidence | Semantic Release baseline, exact-source CI proof, candidate evidence and publication guards |
+| `rulesets/releasable-open-source-software` | Releasable open-source software | `check`, `pre-push` | Semantic Release baseline |
 | `rulesets/security` | Repositories adopting the security policy | `check`, `pre-push` | Sensitive filenames and secret scanning |
 
 Repository conventions stay lightweight and work through Git hooks alone; `check` adds the same size limit and EditorConfig baseline to CI.
 Security is a deliberate domain separation. License checking belongs to the
-open-source bundle. Aligned `ci.yml` and `release.yml` structure checks belong to
-the open-source and release bundles respectively, but are **not implemented yet**.
-This restructuring adds no checks and does not migrate existing consumers.
+open-source bundle.
 
 ## Layout
 
@@ -44,13 +42,13 @@ explicitly; rules and providers never install tools. Pin each ruleset and provid
 import to a reviewed full Git commit, then run `please sync` to validate resources
 and confirm managed hook installation. Synchronization does not execute checks or
 call providers. Subsequent execution loads the immutable cached revision offline;
-the Gemini and GitHub API operations themselves still require network access.
+the Gemini operations themselves still require network access.
 
 | Bundle | Required consumer configuration | Tools and credentials |
 | --- | --- | --- |
 | Repository conventions | `agents-size.max_tokens`; `commit-message.scopes_file`; independent `gemini-flash-lite` and `gemini-flash` provider imports | Python 3.9+, Git and `GEMINI_API_KEY` for the wording and `AGENTS.md` reviews |
 | Open-source software | `license.target`, usually `LICENSE` | Python 3.9+, Git, `actionlint`, ShellCheck, npm |
-| Releasable open-source software | Three declared custom points; `semantic-release.tag_format`; `release-contract.ci_policy` and `.artifacts_policy` | Python 3.11+, Git, Node 24+ for the Semantic Release baseline and the publication guard, GitHub Actions context and `GITHUB_TOKEN` |
+| Releasable open-source software | `semantic-release.tag_format` | Python 3.9+, Git, Node 24+ |
 | Security | No required parameters at its assigned points | Python 3.9+, Git, Gitleaks v8 with `gitleaks dir` |
 
 The wording and `AGENTS.md` quality Reviews are advisory; its FAIL and ERROR results remain visible without
@@ -62,7 +60,7 @@ See complete import examples, parameters, evidence boundaries and limitations:
 
 - [Repository conventions and Gemini](docs/repository-conventions.md)
 - [Open-source software and license policy](docs/open-source-software.md)
-- [Release policy and artifact evidence](docs/releases.md)
+- [Semantic Release baseline](docs/releases.md)
 - [Security and scanner configuration](docs/security.md)
 - [Compatibility and path migration](docs/migration.md)
 - [Shared Renovate governor preset](docs/governor-updates.md)
@@ -70,13 +68,12 @@ See complete import examples, parameters, evidence boundaries and limitations:
 ## Validation
 
 Tests use temporary local Git repositories and mocked HTTP. They must never call
-live providers or GitHub APIs. Use a published Please Behave binary for import and
+live providers or network APIs. Use a published Please Behave binary for import and
 managed-hook integration, independently of any CLI candidate under development.
 
 ```sh
 python3 tests/test_commit_message.py
 python3 -m unittest discover -s tests -v
-node --test tests/test_release_guard.mjs
 python3 tests/test_commit_message.py --please /path/to/published/please
 ```
 

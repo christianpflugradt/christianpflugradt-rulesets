@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CHECKS = sorted(ROOT.glob("rules/checks/*/check.py")) + [ROOT / "scripts/file-reference.py"]
 SNAPSHOT_USERS = [ROOT / "rules/checks/agents-size/check.py", ROOT / "rules/checks/editorconfig/check.py",
                   ROOT / "rules/checks/sensitive-files/check.py",
-                  ROOT / "rules/checks/secret-scan/check.py", ROOT / "rules/checks/release-contract/check.py",
+                  ROOT / "rules/checks/secret-scan/check.py",
                   ROOT / "rules/checks/semantic-release/check.py",
                   ROOT / "scripts/file-reference.py"]
 
