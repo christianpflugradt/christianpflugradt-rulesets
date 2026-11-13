@@ -73,10 +73,10 @@ class RulesetIntegrationTests(unittest.TestCase):
             expected = {
                 "pre-commit": {"agents-size", "editorconfig", "mise-baseline"},
                 "commit-msg": {"commit-message", "commit-message-quality"},
-                "check": {"agents-size", "editorconfig", "mise-baseline", "license", "workflows", "shell", "mise-prepare", "npm-audit",
-                          "secret-scan", "sensitive-files", "semantic-release", "mise-release"},
-                "pre-push": {"license", "workflows", "shell", "mise-prepare", "secret-scan", "sensitive-files", "semantic-release",
-                             "mise-release"},
+                "check": {"agents-size", "editorconfig", "mise-baseline", "license", "workflows", "ci-workflow", "shell", "mise-prepare", "npm-audit",
+                          "secret-scan", "sensitive-files", "semantic-release", "mise-release", "release-workflow"},
+                "pre-push": {"license", "workflows", "ci-workflow", "shell", "mise-prepare", "secret-scan", "sensitive-files",
+                             "semantic-release", "mise-release", "release-workflow"},
             }
             for point, rules in expected.items():
                 with self.subTest(point=point):

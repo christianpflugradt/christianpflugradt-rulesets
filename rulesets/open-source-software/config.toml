@@ -4,6 +4,7 @@ run_at = ["pre-push", "check"]
 rules = [
   "rules/checks/license",
   "rules/checks/workflows",
+  "rules/checks/ci-workflow",
   "rules/checks/shell",
   "rules/checks/mise-prepare",
   { id = "rules/checks/npm-audit", run_at = ["check"] },

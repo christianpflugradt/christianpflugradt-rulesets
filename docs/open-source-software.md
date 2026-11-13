@@ -1,7 +1,7 @@
 # Open-source software
 
 The `rulesets/open-source-software` set includes the blocking `license`,
-`workflows` and `shell` checks at `check` and `pre-push` and the `npm-audit` check at `check`.
+`workflows`, `ci-workflow`, `mise-prepare` and `shell` checks at `check` and `pre-push` and the `npm-audit` check at `check`.
 The [quality assurance checks](#quality-assurance) follow the license section.
 The `license` check It compares the target file byte-for-byte with the regular,
 nonhidden files in `rules/checks/license/licenses/`. The included references are
@@ -50,13 +50,22 @@ ERROR (2).
   fetches the locked dependencies that offline Git hooks and CI need, such as `npm ci`, so that
   `mise install` followed by `mise prepare` sets up a checkout. It is not specific to CI.
 
-Requirements: Git, and Python 3.9+ for `shell` and `npm-audit`, plus the tools named above.
+- `ci-workflow` requires `.github/workflows/ci.yml` to follow the shared structure:
+  - `name: CI`, triggered by `push` to `main` and by `pull_request`; further triggers are allowed.
+  - Top-level `permissions` are exactly `contents: read`.
+  - A job with the id `check` that sets `timeout-minutes` and contains, in this order, with other
+    steps allowed in between: `actions/checkout` with `persist-credentials: false`,
+    `jdx/mise-action` without `install_args`, `run: mise run prepare`, and `please-behave/action`
+    with `execution-point: check`, `install: 'false'` and `sync: 'true'`.
+  - Every job sets `timeout-minutes`, and every `uses` of a remote action or workflow is pinned to a full commit SHA.
+
+  Runners, matrices, timeout values, extra jobs and steps, secrets and artifact names are the
+  repository's own. The rule checks structure only; it does not verify that CI ran or passed.
+  It needs `yq` (v4) on `PATH` and Python 3.9+, and a missing tool or invalid YAML returns ERROR.
+
+Requirements: Git, and Python 3.9+ for `shell`, `npm-audit` and `ci-workflow`, plus the tools named above.
 
 Pin a full commit hash for reproducible imports. Run `please sync` to resolve
 the import and install the managed pre-push hook. Exact matching enforces the
 chosen reference texts; it does not identify licenses or assess their legal
 suitability.
-
-An aligned `ci.yml` quality-assurance workflow belongs to this policy bundle.
-Checking its presence and structure is future work; this revision enforces only
-the license policy.

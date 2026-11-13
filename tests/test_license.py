@@ -139,7 +139,12 @@ class LicenseTests(unittest.TestCase):
         (self.repo / "mise.toml").write_text('[tasks.prepare]\nrun = "npm ci"\n')
         (self.repo / ".github/workflows").mkdir(parents=True)
         (self.repo / ".github/workflows/ci.yml").write_text(
-            "name: CI\non: push\njobs:\n  check:\n    runs-on: ubuntu-24.04\n    steps:\n      - run: echo ok\n")
+            "name: CI\non:\n  push:\n    branches: [main]\n  pull_request:\npermissions:\n  contents: read\n"
+            "jobs:\n  check:\n    runs-on: ubuntu-24.04\n    timeout-minutes: 5\n    steps:\n"
+            f"      - uses: actions/checkout@{'a' * 40}\n        with:\n          persist-credentials: false\n"
+            f"      - uses: jdx/mise-action@{'a' * 40}\n      - run: mise run prepare\n"
+            f"      - uses: please-behave/action@{'a' * 40}\n        with:\n          install: 'false'\n"
+            "          sync: 'true'\n          execution-point: check\n")
         for path, set_id in (("rulesets/open-source-software", "open-source-software"),):
             with self.subTest(path=path):
                 config.write_text("project = \"License fixture\"\n[[imports]]\ngit = " + json.dumps(str(source)) +

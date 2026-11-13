@@ -14,6 +14,7 @@ SNAPSHOT_USERS = [ROOT / "rules/checks/agents-size/check.py", ROOT / "rules/chec
                   ROOT / "rules/checks/sensitive-files/check.py",
                   ROOT / "rules/checks/secret-scan/check.py",
                   ROOT / "rules/checks/semantic-release/check.py",
+                  ROOT / "rules/checks/ci-workflow/check.py", ROOT / "rules/checks/release-workflow/check.py",
                   ROOT / "scripts/file-reference.py", ROOT / "scripts/mise-tasks.py"]
 
 

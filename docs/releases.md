@@ -1,8 +1,8 @@
 # Releasable open-source software
 
 Import `rulesets/releasable-open-source-software` in addition to the other bundles.
-It runs the blocking `semantic-release` Check at `pre-push` (`HEAD`) and `check`
-(working tree). Example for the consumer's `.please/config.toml`:
+It runs the blocking `semantic-release`, `mise-release` and `release-workflow` Checks at `pre-push`
+(`HEAD`) and `check` (working tree). Example for the consumer's `.please/config.toml`:
 
 ```toml
 [[imports]]
@@ -60,3 +60,27 @@ rules as the [Mise baseline](repository-conventions.md#mise-baseline); it needs 
 Its body is the repository's own; normally it starts the release workflow, for example
 `gh workflow run release.yml --ref main`. The task runs on the remote `main`, never on local
 state.
+
+## Release workflow
+
+The blocking `release-workflow` Check requires `.github/workflows/release.yml` to follow the shared
+structure. It needs `yq` (v4) on `PATH` and Python 3.9+; a missing tool or invalid YAML returns ERROR.
+
+- `name: Release`, triggered by `workflow_dispatch` and optionally `schedule`, never by `push` or `pull_request`.
+- Top-level `permissions` are exactly `contents: read`, the concurrency group is `release-main` with
+  `cancel-in-progress: false`, and `MISE_AUTO_INSTALL` is `'false'`, so that each job installs only the
+  tool subset it names in `install_args`. Every `jdx/mise-action` step therefore sets `install_args`.
+- The jobs `plan`, `release-readiness`, `release-candidate` and `publish` exist; further jobs are allowed.
+- `plan` runs only on `refs/heads/main`, outputs `release`, `version` and `source_sha`, and runs `npm run release:plan`.
+- Every other job needs `plan` and runs only if `needs.plan.outputs.release == 'true'`. `publish` needs every
+  other job and runs only if each of them, `plan` excepted, has the result `success`. It ends with `npm run release`.
+- Every `actions/checkout` sets `persist-credentials: false`, and every job but `plan` checks out
+  `needs.plan.outputs.source_sha`.
+- Only `plan` and `publish` may grant write permissions.
+- A job `publish` waits on uses `please-behave/action` with `execution-point: release`.
+- Every job sets `timeout-minutes`, and every `uses` of a remote action or workflow is pinned to a full commit SHA.
+
+Scripts and their locations, evidence and artifact handling, candidate and smoke steps, runners and
+matrices are the repository's own and are not inspected, so release scripts can move to another repository
+or become a versioned dependency. The rule checks structure only; it does not verify that CI succeeded for
+the released commit.

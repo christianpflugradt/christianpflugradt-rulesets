@@ -8,8 +8,8 @@ that apply to a repository; each bundle adds to the others.
 | Ruleset path | Repository group | Execution points | Current rules |
 | --- | --- | --- | --- |
 | `rulesets/repository-conventions` | Every repository, public or private, software or otherwise | `pre-commit`, `check`; `commit-msg` for commit rules | `AGENTS.md` size limit, EditorConfig baseline, Conventional Commit syntax and advisory header wording, mise governor pin with `format` and `verify` tasks |
-| `rulesets/open-source-software` | Open-source software | `check`, `pre-push` | Approved license, `prepare` task |
-| `rulesets/releasable-open-source-software` | Releasable open-source software | `check`, `pre-push` | Semantic Release baseline, `release` task |
+| `rulesets/open-source-software` | Open-source software | `check`, `pre-push` | Approved license, `prepare` task, CI workflow structure |
+| `rulesets/releasable-open-source-software` | Releasable open-source software | `check`, `pre-push` | Semantic Release baseline, `release` task, Release workflow structure |
 | `rulesets/security` | Repositories adopting the security policy | `check`, `pre-push` | Sensitive filenames and secret scanning |
 
 Repository conventions stay lightweight and work through Git hooks alone; `check` adds the same size limit and EditorConfig baseline to CI.
@@ -47,8 +47,8 @@ the Gemini operations themselves still require network access.
 | Bundle | Required consumer configuration | Tools and credentials |
 | --- | --- | --- |
 | Repository conventions | `agents-size.max_tokens`; `commit-message.scopes_file`; independent `gemini-flash-lite` and `gemini-flash` provider imports | Python 3.9+ (3.11+ for the mise tasks check), Git and `GEMINI_API_KEY` for the wording and `AGENTS.md` reviews |
-| Open-source software | `license.target`, usually `LICENSE` | Python 3.9+ (3.11+ for the `prepare` task check), Git, `actionlint`, ShellCheck, npm |
-| Releasable open-source software | `semantic-release.tag_format` | Python 3.11+, Git, Node 24+ |
+| Open-source software | `license.target`, usually `LICENSE` | Python 3.9+ (3.11+ for the `prepare` task check), Git, `actionlint`, ShellCheck, `yq`, npm |
+| Releasable open-source software | `semantic-release.tag_format` | Python 3.11+, Git, Node 24+, `yq` |
 | Security | No required parameters at its assigned points | Python 3.9+, Git, Gitleaks v8 with `gitleaks dir` |
 
 The wording and `AGENTS.md` quality Reviews are advisory; its FAIL and ERROR results remain visible without
