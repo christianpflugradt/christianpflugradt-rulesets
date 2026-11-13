@@ -40,3 +40,6 @@ Checks run `please sync` against the new revision, so a removed path or a Rule t
 needs a newer governor fails the PR instead of merging. Such a PR stays open and is
 rebased once the governor update has merged. `git` and `ref` may appear in either
 order within an entry.
+
+When changing a `ref` by hand, run `please sync --yes` before committing; until the new
+revision is validated, hooks reject it with "external import has no validated revision".
