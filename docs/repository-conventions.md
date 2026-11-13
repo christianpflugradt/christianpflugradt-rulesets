@@ -68,6 +68,11 @@ run = "please run --at pre-push --checks-only --fail-fast"
 - A task counts when it has a non-empty `run` or `depends`. File tasks outside `mise.toml`
   are not recognized. Any other tool, such as `gh`, a formatter or a language runtime, is the
   repository's own decision and is not inspected.
+- Add tasks beyond the baseline only for a good reason. Feedback comes from Git hooks and `verify`,
+  so a task that repeats a rule's command, such as `lint` or `test`, does not belong. Good reasons
+  are an action without hook feedback (starting the application, publishing a preview), an artifact
+  to produce, a command a workflow calls, or a feedback loop that is too long for the hooks. Discuss
+  the last one before adding the task.
 
 The Check needs Python 3.11+ for `tomllib`. It takes no parameters.
 
