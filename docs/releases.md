@@ -52,3 +52,11 @@ It requires Python 3.9+, Git and Node 24+. Requirements:
   the repository's own.
 
 Local plugin contents, `assets`, versions and engine bounds are not standardized.
+
+## Release task
+
+The blocking `mise-release` Check requires a `release` task in the root `mise.toml` (same
+rules as the [Mise baseline](repository-conventions.md#mise-baseline); it needs Python 3.11+).
+Its body is the repository's own; normally it starts the release workflow, for example
+`gh workflow run release.yml --ref main`. The task runs on the remote `main`, never on local
+state.

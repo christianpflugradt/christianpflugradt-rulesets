@@ -136,6 +136,7 @@ class LicenseTests(unittest.TestCase):
         config.parent.mkdir()
         (self.repo / ".gitignore").write_text(".please/reports/\n")
         shutil.copyfile(RULE / "licenses/Unlicense.txt", self.repo / "LICENSE")
+        (self.repo / "mise.toml").write_text('[tasks.prepare]\nrun = "npm ci"\n')
         (self.repo / ".github/workflows").mkdir(parents=True)
         (self.repo / ".github/workflows/ci.yml").write_text(
             "name: CI\non: push\njobs:\n  check:\n    runs-on: ubuntu-24.04\n    steps:\n      - run: echo ok\n")

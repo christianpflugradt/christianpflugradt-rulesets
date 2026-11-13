@@ -71,11 +71,12 @@ class RulesetIntegrationTests(unittest.TestCase):
             # Triggered reviews require an explicit baseline; HEAD means no changed files.
             env["PLEASE_CHANGE_BASE"] = git(consumer, "rev-parse", "HEAD").strip()
             expected = {
-                "pre-commit": {"agents-size", "editorconfig"},
+                "pre-commit": {"agents-size", "editorconfig", "mise-baseline"},
                 "commit-msg": {"commit-message", "commit-message-quality"},
-                "check": {"agents-size", "editorconfig", "license", "workflows", "shell", "npm-audit", "secret-scan", "sensitive-files",
-                          "semantic-release"},
-                "pre-push": {"license", "workflows", "shell", "secret-scan", "sensitive-files", "semantic-release"},
+                "check": {"agents-size", "editorconfig", "mise-baseline", "license", "workflows", "shell", "mise-prepare", "npm-audit",
+                          "secret-scan", "sensitive-files", "semantic-release", "mise-release"},
+                "pre-push": {"license", "workflows", "shell", "mise-prepare", "secret-scan", "sensitive-files", "semantic-release",
+                             "mise-release"},
             }
             for point, rules in expected.items():
                 with self.subTest(point=point):

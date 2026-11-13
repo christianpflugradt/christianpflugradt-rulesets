@@ -1,0 +1,8 @@
+id = "mise-prepare"
+description = "Require the prepare task in mise.toml"
+enabled = true
+blocking = true
+
+[check]
+command = "python3 @source/scripts/mise-tasks.py @context --tasks prepare"
+timeout_seconds = 30

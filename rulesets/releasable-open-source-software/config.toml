@@ -1,4 +1,4 @@
 id = "releasable-open-source-software"
 description = "Require the shared Semantic Release baseline for releasable open-source software"
 run_at = ["pre-push", "check"]
-rules = ["rules/checks/semantic-release"]
+rules = ["rules/checks/semantic-release", "rules/checks/mise-release"]

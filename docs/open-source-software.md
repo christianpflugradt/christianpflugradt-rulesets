@@ -45,6 +45,11 @@ ERROR (2).
   `package-lock.json` and fails on high or critical advisories. No lockfile means PASS. It runs
   only at `check` because it needs network access; registry or parsing problems return ERROR.
 
+- `mise-prepare` requires a `prepare` task in the root `mise.toml` (same rules as the
+  [Mise baseline](repository-conventions.md#mise-baseline); it needs Python 3.11+). The task
+  fetches the locked dependencies that offline Git hooks and CI need, such as `npm ci`, so that
+  `mise install` followed by `mise prepare` sets up a checkout. It is not specific to CI.
+
 Requirements: Git, and Python 3.9+ for `shell` and `npm-audit`, plus the tools named above.
 
 Pin a full commit hash for reproducible imports. Run `please sync` to resolve

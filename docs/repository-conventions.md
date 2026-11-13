@@ -2,7 +2,7 @@
 
 The `rulesets/repository-conventions` set runs at `pre-commit` and `check`
 and keeps its two commit rules at `commit-msg` through per-reference overrides. It requires
-Please Behave 0.8.0 or later. It contains the `agents-size` and `editorconfig` Checks, a deterministic
+Please Behave 0.8.0 or later. It contains the `agents-size`, `editorconfig` and `mise-baseline` Checks, a deterministic
 commit syntax Check, an advisory wording Review and an advisory `AGENTS.md` quality Review.
 
 ## EditorConfig baseline
@@ -34,6 +34,39 @@ Additional sections and properties are the repository's own, so file-type overri
 `[*.{rs,py}]` with `indent_size = 4` are neither required nor inspected. The Check needs no
 parameters and does not verify that files obey the file; use an EditorConfig-aware formatter or
 linter for that.
+
+## Mise baseline
+
+Repositories share one task vocabulary through [mise](https://mise.jdx.dev/), so every
+repository answers the same commands. The blocking `mise-baseline` Check requires the root
+`mise.toml` to pin the Please Behave governor under `[tools]` and to define two tasks.
+`pre-commit` and `check` read the working tree. A missing file, tool or task returns FAIL (1);
+an unreadable or invalid file returns ERROR (2).
+
+```toml
+[tools]
+"github:please-behave/cli" = "<VERSION>"
+
+[tasks.format]
+description = "Format all source files"
+run = "<formatters>"
+
+[tasks.verify]
+description = "Run the deterministic Please Behave checks and stop at the first blocker"
+run = "please run --at pre-push --checks-only --fail-fast"
+```
+
+- `format` rewrites every formatted file type of the repository. A repository without a
+  formatter may print a not-implemented message instead of leaving the task out. Splitting it
+  into per-language tasks is the repository's own choice.
+- `verify` is the quick diagnosis: it skips Reviews and stops at the first blocker, which the
+  complete `pre-push` hook and `check` do not. It never replaces them. The name avoids the
+  `check` execution point, which does more.
+- A task counts when it has a non-empty `run` or `depends`. File tasks outside `mise.toml`
+  are not recognized. Any other tool, such as `gh`, a formatter or a language runtime, is the
+  repository's own decision and is not inspected.
+
+The Check needs Python 3.11+ for `tomllib`. It takes no parameters.
 
 ## AGENTS.md size
 

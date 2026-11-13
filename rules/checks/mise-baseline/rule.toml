@@ -1,0 +1,8 @@
+id = "mise-baseline"
+description = "Require the Please Behave governor in mise.toml [tools] and the format and verify tasks"
+enabled = true
+blocking = true
+
+[check]
+command = "python3 @source/scripts/mise-tasks.py @context --tools github:please-behave/cli --tasks format,verify"
+timeout_seconds = 30
