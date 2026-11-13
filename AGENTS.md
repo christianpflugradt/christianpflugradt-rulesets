@@ -18,6 +18,13 @@
 - Open-source software adds approved licenses and the shared workflow-syntax, shell
   and dependency-audit checks. A license check alone does not justify a separate ruleset.
 - Releasable open-source software adds the Semantic Release baseline.
+- Admit a Rule only with a strong argument. A Rule that merely passes one command to local
+  tooling, such as a formatter or linter in check mode, stays local to each repository: accept
+  the redundancy instead of centrally managing tool choices. Rules backed by local scripts that
+  may drift between repositories are decided individually. Do not dictate technology stacks; a
+  stack-specific ruleset (for example Java applications, where Maven or Gradle may be used) is
+  neither excluded nor assumed and needs its own case. This is maintainer advice for this
+  catalog, not a requirement of Please Behave, which supports any setup.
 - Separate domains sparingly. Security is an intentional independent bundle for
   visibility; discuss other new boundaries before introducing them.
 - These are additive policy responsibilities. README distinguishes implemented
