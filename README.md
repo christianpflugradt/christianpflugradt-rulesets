@@ -24,7 +24,6 @@ rulesets/
 rules/checks/<rule>/                       # rule.toml, implementation and resources
 rules/reviews/<rule>/                      # rule.toml, prompt and resources
 providers/<provider>/                      # provider.toml and adapter
-scripts/                                  # Reusable helpers and integration scripts
 docs/                                     # Policy usage and compatibility details
 ```
 
@@ -71,7 +70,7 @@ Tests cover single rule scripts or provider adapters only and live next to the c
 call live providers or network APIs.
 
 ```sh
-for test in $(find rules providers scripts -name 'test_*.py'); do python3 -B "$test" || break; done
+for test in $(find rules providers -name 'test_*.py'); do python3 -B "$test" || break; done
 ```
 
 Skipped tests do not demonstrate successful validation. The repository currently

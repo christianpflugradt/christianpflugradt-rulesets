@@ -1,26 +1,58 @@
-#!/usr/bin/env python3
-"""Require tools and tasks in the root mise.toml: mise-tasks.py CONTEXT [--tools A,B] [--tasks X,Y]."""
+"""Require the prepare task in the root mise.toml."""
+import json
 from pathlib import Path
+import stat
+import subprocess
 import sys
 
 
 # Imported rule resources must remain immutable.
 sys.dont_write_bytecode = True
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+SNAPSHOTS = {"pre-commit": "worktree", "check": "worktree", "pre-push": "head"}
+
+
+def execution_point(context_file):
+    with open(context_file, encoding="utf-8") as handle:
+        point = json.load(handle).get("execution_point")
+    if not isinstance(point, str) or not point:
+        raise ValueError("run context has no execution point")
+    return point
+
+
+def select_snapshot(point):
+    if point not in SNAPSHOTS:
+        raise ValueError(f"unsupported execution point: {point}")
+    return SNAPSHOTS[point]
+
+
+def read_file(selected, name):
+    """Return the bytes of a root file in the selected snapshot, or None when it is absent."""
+    if selected == "head":
+        listed = subprocess.run(["git", "ls-tree", "-z", "HEAD", "--", f":(literal){name}"],
+                                capture_output=True, check=False)
+        if listed.returncode != 0:
+            raise RuntimeError(listed.stderr.decode(errors="replace").strip())
+        if not listed.stdout:
+            return None
+        if listed.stdout.split(b" ", 1)[0] not in (b"100644", b"100755"):
+            raise RuntimeError(f"{name} is not a regular file in HEAD")
+        shown = subprocess.run(["git", "show", f"HEAD:{name}"], capture_output=True, check=False)
+        if shown.returncode != 0:
+            raise RuntimeError(shown.stderr.decode(errors="replace").strip())
+        return shown.stdout
+    path = Path.cwd().resolve() / name
+    try:
+        mode = path.lstat().st_mode
+    except FileNotFoundError:
+        return None
+    if not stat.S_ISREG(mode):
+        raise RuntimeError(f"{name} is not a regular file")
+    return path.read_bytes()
 
 TARGET = "mise.toml"
-
-
-def parse_arguments(argv):
-    """Return (context file, tools, tasks) from the command line."""
-    if len(argv) < 2 or len(argv) % 2:
-        raise ValueError("expected arguments: context file, optional --tools and --tasks lists")
-    lists = {"--tools": [], "--tasks": []}
-    for flag, value in zip(argv[2::2], argv[3::2]):
-        if flag not in lists:
-            raise ValueError(f"unknown argument: {flag}")
-        lists[flag] = [item for item in value.split(",") if item]
-    return argv[1], lists["--tools"], lists["--tasks"]
+TOOLS = []
+TASKS = ["prepare"]
 
 
 def runnable(task):
@@ -37,7 +69,7 @@ def runnable(task):
     return False
 
 
-def violations(document, tools, tasks):
+def violations(document, tools=TOOLS, tasks=TASKS):
     found = []
     declared = document.get("tools")
     declared = declared if isinstance(declared, dict) else {}
@@ -53,13 +85,13 @@ def violations(document, tools, tasks):
 
 
 def main():
-    from snapshot import execution_point, read_file, select_snapshot
-    context_file, tools, tasks = parse_arguments(sys.argv)
+    if len(sys.argv) != 2:
+        raise ValueError("expected argument: context file")
     try:
         import tomllib
     except ImportError:
         raise RuntimeError("Python 3.11+ is required to parse mise.toml") from None
-    point = execution_point(context_file)
+    point = execution_point(sys.argv[1])
     content = read_file(select_snapshot(point), TARGET)
     if content is None:
         print(f"FAIL: {TARGET} is missing")
@@ -68,7 +100,7 @@ def main():
         document = tomllib.loads(content.decode("utf-8"))
     except (UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
         raise ValueError(f"{TARGET} is not valid UTF-8 TOML: {exc}") from None
-    found = violations(document, tools, tasks)
+    found = violations(document)
     for message in found:
         print(f"FAIL: {TARGET} {message}")
     if not found:

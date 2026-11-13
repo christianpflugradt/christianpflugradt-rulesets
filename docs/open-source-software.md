@@ -10,9 +10,8 @@ from [SPDX license-list-data](https://github.com/spdx/license-list-data/tree/318
 at commit `31846481de7ea17d92f2f46fad76abe58b2e9bb0`. Add or remove reference files to
 change the allowlist. Whitespace, line endings and copyright notices must match.
 
-Requirements: Python 3.9+ and Git. The command
-`python3 @source/scripts/file-reference.py` runs the shared script from this
-repository root, and `@rule/licenses` locates the Rule's license references.
+Requirements: Python 3.9+ and Git. The Rule's own script compares the target with the
+references in its `licenses` directory.
 
 ```toml
 [[imports]]

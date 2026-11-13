@@ -1,13 +1,29 @@
 """Reject sensitive filenames without reading their contents."""
+import json
 import os
-from pathlib import Path, PurePosixPath
+from pathlib import PurePosixPath
 import subprocess
 import sys
 
 
 # Imported rule resources must remain immutable.
 sys.dont_write_bytecode = True
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
+
+SNAPSHOTS = {"pre-commit": "worktree", "check": "worktree", "pre-push": "head"}
+
+
+def execution_point(context_file):
+    with open(context_file, encoding="utf-8") as handle:
+        point = json.load(handle).get("execution_point")
+    if not isinstance(point, str) or not point:
+        raise ValueError("run context has no execution point")
+    return point
+
+
+def select_snapshot(point):
+    if point not in SNAPSHOTS:
+        raise ValueError(f"unsupported execution point: {point}")
+    return SNAPSHOTS[point]
 
 
 def prohibited(path):
@@ -25,7 +41,6 @@ def command(*args):
 
 
 def main():
-    from snapshot import execution_point, select_snapshot
     if len(sys.argv) != 2:
         raise ValueError("expected one argument: context file")
     point = execution_point(sys.argv[1])

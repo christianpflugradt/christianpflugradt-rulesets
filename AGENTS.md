@@ -36,14 +36,15 @@
   not execution points; their `run_at` values are declared in the set. Each set defines
   one declarative bundle with repository-relative Rule paths.
 - Keep Rule-specific code, prompts and reference data with `rule.toml` under
-  `rules/checks/` or `rules/reviews/`. Put reusable helpers in `scripts/` and
-  provider definitions and adapters together under `providers/<provider>/`.
+  `rules/checks/` or `rules/reviews/`. Each Rule is self-contained: there is no shared
+  scripts directory, and duplicating a small helper across Rules is preferred over
+  sharing code between them. Keep provider definitions and adapters together under
+  `providers/<provider>/`.
 - Keep the catalog and setup in README and detailed usage in `docs/`. Update
   definitions, tests and documentation together.
 - Add offline unit tests only for a Rule script or provider adapter complex enough to
   justify them. Keep each suite next to the code it tests, as `test_*.py` in the
-  Rule or provider directory (or beside a shared script in `scripts/`), and limited
-  to that one Rule or provider. Do not write tests that span several Rules or
+  Rule or provider directory, and limited to that one Rule or provider. Do not write tests that span several Rules or
   rulesets, import integrations, or definitions, names and descriptions; validate
   those through review.
 - Keep every Rule small enough for a maintainer to read and change in one sitting.

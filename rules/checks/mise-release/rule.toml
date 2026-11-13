@@ -5,5 +5,5 @@ enabled = true
 blocking = true
 
 [check]
-command = "python3 @source/scripts/mise-tasks.py @context --tasks release"
+command = "python3 @rule/check.py @context"
 timeout_seconds = 30

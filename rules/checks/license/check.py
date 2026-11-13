@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
-"""Compare a repository file byte-for-byte with rule-local reference files."""
+"""Require the license file to match one of the approved reference licenses in the rule's licenses directory."""
+import json
 from pathlib import Path
 import stat
 import subprocess
@@ -8,7 +8,22 @@ import sys
 
 # Imported rule resources must remain immutable.
 sys.dont_write_bytecode = True
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+SNAPSHOTS = {"pre-commit": "worktree", "check": "worktree", "pre-push": "head"}
+
+
+def execution_point(context_file):
+    with open(context_file, encoding="utf-8") as handle:
+        point = json.load(handle).get("execution_point")
+    if not isinstance(point, str) or not point:
+        raise ValueError("run context has no execution point")
+    return point
+
+
+def select_snapshot(point):
+    if point not in SNAPSHOTS:
+        raise ValueError(f"unsupported execution point: {point}")
+    return SNAPSHOTS[point]
 
 
 def error(message):
@@ -17,7 +32,6 @@ def error(message):
 
 
 def main():
-    from snapshot import execution_point, select_snapshot
     if len(sys.argv) != 4:
         return error("expected arguments: context file, target and licenses directory")
     context_file, target, licenses = sys.argv[1:]

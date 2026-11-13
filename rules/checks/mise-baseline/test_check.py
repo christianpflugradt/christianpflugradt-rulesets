@@ -1,4 +1,4 @@
-"""Tool and task detection, snapshots and technical failures of the shared mise.toml check."""
+"""Tool and task detection, snapshots and technical failures of the mise baseline check."""
 import json
 import importlib.util
 from pathlib import Path
@@ -13,9 +13,8 @@ def write_context(directory, point, **fields):
     path.write_text(json.dumps(dict(execution_point=point, **fields)))
     return str(path)
 
-ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "scripts/mise-tasks.py"
-spec = importlib.util.spec_from_file_location("mise_tasks", SCRIPT)
+SCRIPT = Path(__file__).resolve().parent / "check.py"
+spec = importlib.util.spec_from_file_location("mise_baseline", SCRIPT)
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 
@@ -61,17 +60,9 @@ class DetectionTests(unittest.TestCase):
             with self.subTest(text=text):
                 self.assertEqual(len(violations(text)), count)
 
-    def test_arguments(self):
-        self.assertEqual(mod.parse_arguments(["x", "ctx", "--tools", "a,b", "--tasks", "c"]), ("ctx", ["a", "b"], ["c"]))
-        self.assertEqual(mod.parse_arguments(["x", "ctx"]), ("ctx", [], []))
-        for bad in (["x"], ["x", "ctx", "--tools"], ["x", "ctx", "--other", "a"]):
-            with self.subTest(argv=bad):
-                with self.assertRaises(ValueError):
-                    mod.parse_arguments(bad)
-
 
 class CommandTests(unittest.TestCase):
-    def run_check(self, point, content, *arguments, commit=True):
+    def run_check(self, point, content, commit=True):
         with tempfile.TemporaryDirectory(prefix="mise-tasks-") as temporary:
             repo = Path(temporary)
             for args in (["init", "--quiet"], ["config", "user.name", "T"], ["config", "user.email", "t@example.invalid"],
@@ -83,18 +74,17 @@ class CommandTests(unittest.TestCase):
             if commit:
                 subprocess.run(["git", "commit", "--quiet", "--allow-empty", "-m", "test: record"], cwd=repo, check=True)
             context = write_context(temporary, point)
-            return subprocess.run([sys.executable, "-B", str(SCRIPT), context, *arguments], cwd=repo,
+            return subprocess.run([sys.executable, "-B", str(SCRIPT), context], cwd=repo,
                                   capture_output=True, text=True)
 
     def test_verdicts(self):
-        arguments = ("--tools", GOVERNOR, "--tasks", "format,verify")
         for point in ("pre-commit", "check", "pre-push"):
             with self.subTest(point=point):
-                self.assertEqual(self.run_check(point, VALID, *arguments).returncode, 0)
-        missing = self.run_check("check", None, *arguments)
+                self.assertEqual(self.run_check(point, VALID).returncode, 0)
+        missing = self.run_check("check", None)
         self.assertEqual(missing.returncode, 1)
         self.assertIn("missing", missing.stdout)
-        incomplete = self.run_check("pre-push", "[tools]\n", *arguments)
+        incomplete = self.run_check("pre-push", "[tools]\n")
         self.assertEqual(incomplete.returncode, 1)
         self.assertIn("format", incomplete.stdout)
 
@@ -111,14 +101,13 @@ class CommandTests(unittest.TestCase):
             results = {}
             for point in ("check", "pre-push"):
                 context = write_context(temporary, point)
-                results[point] = subprocess.run([sys.executable, "-B", str(SCRIPT), context, "--tasks", "format"],
+                results[point] = subprocess.run([sys.executable, "-B", str(SCRIPT), context],
                                                 cwd=repo, capture_output=True, text=True).returncode
             self.assertEqual(results, {"check": 1, "pre-push": 0})
 
     def test_technical_failures_are_errors(self):
-        self.assertEqual(self.run_check("commit-msg", VALID, "--tasks", "format").returncode, 2)
-        self.assertEqual(self.run_check("check", "not = [valid", "--tasks", "format").returncode, 2)
-        self.assertEqual(self.run_check("check", VALID, "--unknown", "x").returncode, 2)
+        self.assertEqual(self.run_check("commit-msg", VALID).returncode, 2)
+        self.assertEqual(self.run_check("check", "not = [valid").returncode, 2)
 
 
 if __name__ == "__main__":

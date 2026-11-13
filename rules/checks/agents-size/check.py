@@ -1,4 +1,7 @@
 """Limit the approximate token count of the root AGENTS.md."""
+import json
+import stat
+import subprocess
 from pathlib import Path
 import re
 import sys
@@ -6,7 +9,47 @@ import sys
 
 # Imported rule resources must remain immutable.
 sys.dont_write_bytecode = True
-sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "scripts"))
+
+SNAPSHOTS = {"pre-commit": "worktree", "check": "worktree", "pre-push": "head"}
+
+
+def execution_point(context_file):
+    with open(context_file, encoding="utf-8") as handle:
+        point = json.load(handle).get("execution_point")
+    if not isinstance(point, str) or not point:
+        raise ValueError("run context has no execution point")
+    return point
+
+
+def select_snapshot(point):
+    if point not in SNAPSHOTS:
+        raise ValueError(f"unsupported execution point: {point}")
+    return SNAPSHOTS[point]
+
+
+def read_file(selected, name):
+    """Return the bytes of a root file in the selected snapshot, or None when it is absent."""
+    if selected == "head":
+        listed = subprocess.run(["git", "ls-tree", "-z", "HEAD", "--", f":(literal){name}"],
+                                capture_output=True, check=False)
+        if listed.returncode != 0:
+            raise RuntimeError(listed.stderr.decode(errors="replace").strip())
+        if not listed.stdout:
+            return None
+        if listed.stdout.split(b" ", 1)[0] not in (b"100644", b"100755"):
+            raise RuntimeError(f"{name} is not a regular file in HEAD")
+        shown = subprocess.run(["git", "show", f"HEAD:{name}"], capture_output=True, check=False)
+        if shown.returncode != 0:
+            raise RuntimeError(shown.stderr.decode(errors="replace").strip())
+        return shown.stdout
+    path = Path.cwd().resolve() / name
+    try:
+        mode = path.lstat().st_mode
+    except FileNotFoundError:
+        return None
+    if not stat.S_ISREG(mode):
+        raise RuntimeError(f"{name} is not a regular file")
+    return path.read_bytes()
 
 TARGET = "AGENTS.md"
 
@@ -28,7 +71,6 @@ def parse_limit(value):
 
 
 def main():
-    from snapshot import execution_point, read_file, select_snapshot
     require_arguments(2)
     point = execution_point(sys.argv[1])
     limit = parse_limit(sys.argv[2])

@@ -3,7 +3,7 @@ name = "License"
 description = "The repository has an approved license"
 
 [check]
-command = "python3 @source/scripts/file-reference.py @context @param/target @rule/licenses"
+command = "python3 @rule/check.py @context @param/target @rule/licenses"
 
 [parameters.target]
 type = "string"

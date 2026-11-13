@@ -1,4 +1,4 @@
-"""Exact license matching and technical failures of the shared reference check."""
+"""Exact license matching and technical failures of the license check."""
 import json
 import importlib.util
 import io
@@ -18,8 +18,8 @@ def write_context(directory, point, **fields):
 
 ROOT = Path(__file__).resolve().parents[3]
 RULE = ROOT / "rules/checks/license"
-SCRIPT = ROOT / "scripts/file-reference.py"
-spec = importlib.util.spec_from_file_location("file_reference", SCRIPT)
+SCRIPT = RULE / "check.py"
+spec = importlib.util.spec_from_file_location("license_check", SCRIPT)
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
 
@@ -109,7 +109,7 @@ class LicenseTests(unittest.TestCase):
         self.rule("pre-push", 2)  # Unborn HEAD is a technical failure, not a missing license.
 
     def test_io_and_git_read_errors_are_errors(self):
-        argv = ["file-reference.py", write_context(self.base, "check"), "LICENSE", str(RULE / "licenses")]
+        argv = ["check.py", write_context(self.base, "check"), "LICENSE", str(RULE / "licenses")]
         pushed = [argv[0], write_context(self.base, "pre-push"), *argv[2:]]
         with patch.object(sys, "argv", argv), patch("sys.stderr", new_callable=io.StringIO):
             with patch.object(Path, "iterdir", side_effect=PermissionError("unreadable references")):
