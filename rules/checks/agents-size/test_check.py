@@ -1,4 +1,5 @@
 """Approximate token counting, limits, snapshots and technical failures."""
+import json
 import importlib.util
 import os
 from pathlib import Path
@@ -7,10 +8,12 @@ import sys
 import tempfile
 import unittest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from context import write_context  # noqa: E402
+def write_context(directory, point, **fields):
+    path = Path(directory) / f"context-{point}.json"
+    path.write_text(json.dumps(dict(execution_point=point, **fields)))
+    return str(path)
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = ROOT / "rules/checks/agents-size/check.py"
 spec = importlib.util.spec_from_file_location("agents_size", SCRIPT)
 mod = importlib.util.module_from_spec(spec)

@@ -1,4 +1,5 @@
 """Tool and task detection, snapshots and technical failures of the shared mise.toml check."""
+import json
 import importlib.util
 from pathlib import Path
 import subprocess
@@ -7,8 +8,10 @@ import tempfile
 import tomllib
 import unittest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from context import write_context  # noqa: E402
+def write_context(directory, point, **fields):
+    path = Path(directory) / f"context-{point}.json"
+    path.write_text(json.dumps(dict(execution_point=point, **fields)))
+    return str(path)
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts/mise-tasks.py"

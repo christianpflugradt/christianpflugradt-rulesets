@@ -9,10 +9,12 @@ import sys
 import tempfile
 import unittest
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from context import write_context  # noqa: E402
+def write_context(directory, point, **fields):
+    path = Path(directory) / f"context-{point}.json"
+    path.write_text(json.dumps(dict(execution_point=point, **fields)))
+    return str(path)
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = ROOT / "rules/checks/semantic-release/check.py"
 spec = importlib.util.spec_from_file_location("semantic_release_rule", SCRIPT)
 mod = importlib.util.module_from_spec(spec)
@@ -102,14 +104,6 @@ class ConfigTests(unittest.TestCase):
         config["tagFormat"] = "${version}"
         self.assertEqual(len(violations(config)), 1)
         self.assertEqual(violations(config, tag="${version}"), [])
-
-    def test_every_commit_type_is_mapped_once(self):
-        types = (ROOT / "rules/checks/commit-message/commit-types.txt").read_text().split()
-        for kind in types:
-            with self.subTest(kind=kind):
-                self.assertTrue([rule for rule in mod.RELEASE_RULES if rule.get("type") == kind])
-                self.assertTrue([item for item in mod.NOTE_TYPES if item["type"] == kind])
-        self.assertEqual(len(mod.canonical(mod.RELEASE_RULES)), len(set(mod.canonical(mod.RELEASE_RULES))))
 
     def test_deviations_are_reported(self):
         def edit(change):

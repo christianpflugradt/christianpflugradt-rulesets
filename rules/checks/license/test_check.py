@@ -1,4 +1,5 @@
 """Exact license matching and technical failures of the shared reference check."""
+import json
 import importlib.util
 import io
 import os
@@ -10,10 +11,12 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from context import write_context  # noqa: E402
+def write_context(directory, point, **fields):
+    path = Path(directory) / f"context-{point}.json"
+    path.write_text(json.dumps(dict(execution_point=point, **fields)))
+    return str(path)
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 RULE = ROOT / "rules/checks/license"
 SCRIPT = ROOT / "scripts/file-reference.py"
 spec = importlib.util.spec_from_file_location("file_reference", SCRIPT)

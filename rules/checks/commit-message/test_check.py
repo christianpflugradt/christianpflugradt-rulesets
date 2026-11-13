@@ -1,14 +1,17 @@
 """Validate the commit-message check."""
+import json
 from pathlib import Path
 import os
 import subprocess
 import sys
 import tempfile
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from context import write_context  # noqa: E402
+def write_context(directory, point, **fields):
+    path = Path(directory) / f"context-{point}.json"
+    path.write_text(json.dumps(dict(execution_point=point, **fields)))
+    return str(path)
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 RULE = ROOT / "rules/checks/commit-message"
 
 

@@ -25,7 +25,6 @@ rules/checks/<rule>/                       # rule.toml, implementation and resou
 rules/reviews/<rule>/                      # rule.toml, prompt and resources
 providers/<provider>/                      # provider.toml and adapter
 scripts/                                  # Reusable helpers and integration scripts
-tests/                                    # Offline unit tests of individual rule scripts
 docs/                                     # Policy usage and compatibility details
 ```
 
@@ -67,12 +66,12 @@ See complete import examples, parameters, evidence boundaries and limitations:
 
 ## Validation
 
-Tests cover individual rule scripts only. They use temporary local Git repositories
-and mocked HTTP and must never call live providers or network APIs.
+Tests cover single rule scripts or provider adapters only and live next to the code as
+`test_*.py`. They use temporary local Git repositories and mocked HTTP and must never
+call live providers or network APIs.
 
 ```sh
-python3 tests/test_commit_message.py
-python3 -m unittest discover -s tests -v
+for test in $(find rules providers scripts -name 'test_*.py'); do python3 -B "$test" || break; done
 ```
 
 Skipped tests do not demonstrate successful validation. The repository currently

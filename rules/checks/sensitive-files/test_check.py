@@ -3,7 +3,7 @@ import importlib.util
 from pathlib import Path
 import unittest
 
-MODULE = Path(__file__).resolve().parents[1] / "rules/checks/sensitive-files/check.py"
+MODULE = Path(__file__).resolve().parents[3] / "rules/checks/sensitive-files/check.py"
 spec = importlib.util.spec_from_file_location("sensitive_files", MODULE)
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
