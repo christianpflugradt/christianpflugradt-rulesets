@@ -228,14 +228,14 @@ class SecurityTests(unittest.TestCase):
         subprocess.run(["git", "-C", str(source), "add", "."], check=True)
         subprocess.run(["git", "-C", str(source), "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
                         "-c", "commit.gpgsign=false", "commit", "--quiet", "-m", "feat: add security"], check=True)
-        self.write(".please/config.toml", f'project = "My_App"\n[[imports]]\ngit = {json.dumps(str(source))}\npath = "rulesets/multi-point/security"\nref = "main"\n')
+        self.write(".please/config.toml", f'project = "My_App"\n[[imports]]\ngit = {json.dumps(str(source))}\npath = "rulesets/security"\nref = "main"\n')
         (self.bin / "please").symlink_to(Path(PLEASE).resolve())
         self.run_command([PLEASE, "sync", "--yes"])
         source.rename(self.base / "offline-source")
         for point in ("check", "pre-push"):
             result = self.run_command([PLEASE, "run", "--at", point, "--plan", "--json"])
             plan = json.loads(result.stdout)
-            self.assertEqual({r["origin"]["external"]["path"] for r in plan["scheduled"]}, {"rulesets/multi-point/security"})
+            self.assertEqual({r["origin"]["external"]["path"] for r in plan["scheduled"]}, {"rulesets/security"})
             self.assertEqual(len(plan["scheduled"]), 2)
             self.run_command([PLEASE, "run", "--at", point])
         self.write(".env", "blocked")

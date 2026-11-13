@@ -7,10 +7,10 @@ that apply to a repository; each bundle adds to the others.
 
 | Ruleset path | Repository group | Execution points | Current rules |
 | --- | --- | --- | --- |
-| `rulesets/multi-point/repository-conventions` | Every repository, public or private, software or otherwise | `pre-commit`, `check`; `commit-msg` for commit rules | `AGENTS.md` size limit, EditorConfig baseline, Conventional Commit syntax and advisory header wording |
-| `rulesets/multi-point/open-source-software` | Open-source software | `check`, `pre-push` | Approved license |
-| `rulesets/multi-point/releasable-open-source-software` | Releasable open-source software | `release-readiness`, `release-record`, `release-verify` | Exact-source CI proof, candidate evidence and publication guards |
-| `rulesets/multi-point/security` | Repositories adopting the security policy | `check`, `pre-push` | Sensitive filenames and secret scanning |
+| `rulesets/repository-conventions` | Every repository, public or private, software or otherwise | `pre-commit`, `check`; `commit-msg` for commit rules | `AGENTS.md` size limit, EditorConfig baseline, Conventional Commit syntax and advisory header wording |
+| `rulesets/open-source-software` | Open-source software | `check`, `pre-push` | Approved license |
+| `rulesets/releasable-open-source-software` | Releasable open-source software | `release-readiness`, `release-record`, `release-verify` | Exact-source CI proof, candidate evidence and publication guards |
+| `rulesets/security` | Repositories adopting the security policy | `check`, `pre-push` | Sensitive filenames and secret scanning |
 
 Repository conventions stay lightweight and work through Git hooks alone; `check` adds the same size limit and EditorConfig baseline to CI.
 Security is a deliberate domain separation. License checking belongs to the
@@ -22,8 +22,7 @@ This restructuring adds no checks and does not migrate existing consumers.
 
 ```text
 rulesets/
-  <execution-point>/<ruleset>/config.toml  # One-point policy bundles
-  multi-point/<ruleset>/config.toml        # Bundles assigned to several points
+  <ruleset>/config.toml                    # Policy bundles, grouped logically rather than by execution point
 rules/checks/<rule>/                       # rule.toml, implementation and resources
 rules/reviews/<rule>/                      # rule.toml, prompt and resources
 providers/<provider>/                      # provider.toml and adapter

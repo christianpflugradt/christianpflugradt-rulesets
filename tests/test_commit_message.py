@@ -77,7 +77,7 @@ def integration(root, executable):
     (consumer / "AGENTS.md").write_text("# Agents\n")
     (consumer / ".please/config.toml").write_text(
         f'project = "My_App"\n[[imports]]\ngit = {json.dumps(str(source))}\n'
-        'path = "rulesets/multi-point/repository-conventions"\nref = "main"\n'
+        'path = "rulesets/repository-conventions"\nref = "main"\n'
         '[imports.rule_parameters.commit-message]\nscopes_file = ".commit-scopes"\n'
         '[imports.rule_parameters.agents-size]\nmax_tokens = "1500"\n')
     # Provider packages are imported independently and execute from the cache.

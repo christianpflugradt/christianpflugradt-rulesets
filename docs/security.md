@@ -1,6 +1,6 @@
 # Security
 
-The `rulesets/multi-point/security` set runs two blocking checks at `check` and `pre-push`:
+The `rulesets/security` set runs two blocking checks at `check` and `pre-push`:
 
 - `sensitive-files` rejects `.env` and `.env.*` filenames, except `.env.example`,
   `.env.sample` and `.env.template`, and files ending in `.tfstate` or containing
@@ -20,7 +20,7 @@ Please Behave and these rules install no dependencies.
 ```toml
 [[imports]]
 git = "https://github.com/christianpflugradt/please-behave-governance.git"
-path = "rulesets/multi-point/security"
+path = "rulesets/security"
 ref = "<FULL_REVIEWED_COMMIT_SHA>"
 ```
 
@@ -37,7 +37,7 @@ execution point is ERROR. Neither selection scans history.
 
 ## Scanner configuration and limitations
 
-The `rulesets/multi-point/security` ruleset uses `gitleaks dir` on a temporary
+The `rulesets/security` ruleset uses `gitleaks dir` on a temporary
 snapshot. `check` copies current tracked and nonignored untracked files;
 `pre-push` reads blobs from `HEAD` directly, without export attributes or history.
 

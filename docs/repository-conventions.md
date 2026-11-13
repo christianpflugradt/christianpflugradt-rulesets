@@ -1,6 +1,6 @@
 # Repository conventions
 
-The `rulesets/multi-point/repository-conventions` set runs at `pre-commit` and `check`
+The `rulesets/repository-conventions` set runs at `pre-commit` and `check`
 and keeps its two commit rules at `commit-msg` through per-reference overrides. It requires
 Please Behave 0.8.0 or later. It contains the `agents-size` and `editorconfig` Checks, a deterministic
 commit syntax Check, an advisory wording Review and an advisory `AGENTS.md` quality Review.
@@ -92,7 +92,7 @@ Add this import to the consuming project's `.please/config.toml`:
 ```toml
 [[imports]]
 git = "https://github.com/christianpflugradt/please-behave-governance.git"
-path = "rulesets/multi-point/repository-conventions"
+path = "rulesets/repository-conventions"
 ref = "<FULL_REVIEWED_COMMIT_SHA>"
 
 [imports.rule_parameters.agents-size]

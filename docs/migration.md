@@ -18,13 +18,17 @@ canonical paths; old aliases are not retained:
 | Previous path | Canonical path | Meaning |
 | --- | --- | --- |
 | `commit-msg/conventional-commits` | `rulesets/commit-msg/repository-conventions` | Universal conventions, unchanged syntax Check and advisory Review |
-| `repository-conventions`, `multi-point/license` | `rulesets/multi-point/open-source-software` | License policy belongs to open-source software |
-| `release/releasable-project` | `rulesets/multi-point/releasable-open-source-software` | Existing release contract, unchanged points and parameters |
-| `multi-point/security` | `rulesets/multi-point/security` | Unchanged independent security bundle |
+| `repository-conventions`, `multi-point/license` | `rulesets/open-source-software` | License policy belongs to open-source software |
+| `release/releasable-project` | `rulesets/releasable-open-source-software` | Existing release contract, unchanged points and parameters |
+| `multi-point/security` | `rulesets/security` | Unchanged independent security bundle |
 | `release/readiness` | Retired | Legacy mixed bundle; full-commit pins retain it |
 
+All bundles later moved from `rulesets/multi-point/<bundle>` to `rulesets/<bundle>`,
+because bundles are organised logically and not per execution point. Existing pins keep
+the old layout.
+
 `rulesets/commit-msg/repository-conventions` moved to
-`rulesets/multi-point/repository-conventions` when it gained the `agents-size` Check at
+`rulesets/repository-conventions` when it gained the `agents-size` Check at
 `pre-commit` and `check`. It requires the required parameter `agents-size.max_tokens` and
 a Please Behave release supporting per-reference `run_at` overrides. Existing pins keep the
 previous layout and behavior; no consumer migration is part of this change.

@@ -17,7 +17,7 @@ class AgentsQualityTests(unittest.TestCase):
         self.assertEqual(rule["review"]["context"], [{"path": "AGENTS.md"}])
 
     def test_rule_set_assigns_the_review_to_check_only(self):
-        config = tomllib.loads((ROOT / "rulesets/multi-point/repository-conventions/config.toml").read_text())
+        config = tomllib.loads((ROOT / "rulesets/repository-conventions/config.toml").read_text())
         entries = [rule for rule in config["rules"]
                    if isinstance(rule, dict) and rule["id"] == "rules/reviews/agents-quality"]
         self.assertEqual([entry["run_at"] for entry in entries], [["check"]])

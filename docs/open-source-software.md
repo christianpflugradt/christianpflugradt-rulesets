@@ -1,6 +1,6 @@
 # Open-source software
 
-The `rulesets/multi-point/open-source-software` set includes the blocking `license`,
+The `rulesets/open-source-software` set includes the blocking `license`,
 `workflows` and `shell` checks at `check` and `pre-push` and the `npm-audit` check at `check`.
 The [quality assurance checks](#quality-assurance) follow the license section.
 The `license` check It compares the target file byte-for-byte with the regular,
@@ -17,7 +17,7 @@ repository root, and `@rule/licenses` locates the Rule's license references.
 ```toml
 [[imports]]
 git = "https://github.com/christianpflugradt/please-behave-governance.git"
-path = "rulesets/multi-point/open-source-software"
+path = "rulesets/open-source-software"
 ref = "<FULL_REVIEWED_COMMIT_SHA>"
 
 [imports.rule_parameters.license]

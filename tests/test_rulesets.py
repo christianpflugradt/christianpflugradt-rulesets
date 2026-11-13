@@ -42,8 +42,8 @@ class RulesetIntegrationTests(unittest.TestCase):
             git(source, "add", ".")
             git(source, "commit", "--quiet", "-m", "test: record canonical bundles")
             revision = git(source, "rev-parse", "HEAD").strip()
-            paths = ["rulesets/multi-point/repository-conventions", "rulesets/multi-point/open-source-software",
-                     "rulesets/multi-point/releasable-open-source-software", "rulesets/multi-point/security"]
+            paths = ["rulesets/repository-conventions", "rulesets/open-source-software",
+                     "rulesets/releasable-open-source-software", "rulesets/security"]
             (consumer / ".please").mkdir()
             config = 'project = "Catalog fixture"\n[execution_points]\n'
             config += 'custom = ["release-readiness", "release-record", "release-verify"]\n'
