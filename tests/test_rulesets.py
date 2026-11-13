@@ -56,6 +56,7 @@ class RulesetIntegrationTests(unittest.TestCase):
                     config += '[imports.rule_parameters.license]\ntarget = "LICENSE"\n'
                 elif path.endswith("releasable-open-source-software"):
                     config += '[imports.rule_parameters.release-contract]\nci_policy = "ci.json"\nartifacts_policy = "artifacts.json"\n'
+                    config += '[imports.rule_parameters.semantic-release]\ntag_format = "v${version}"\n'
             config += ('\n[[provider_imports]]\nid = "gemini-flash-lite"\n'
                        f'git = {json.dumps(str(source))}\npath = "providers/gemini-flash-lite"\nref = "{revision}"\n'
                        '\n[[provider_imports]]\nid = "gemini-flash"\n'
@@ -80,8 +81,9 @@ class RulesetIntegrationTests(unittest.TestCase):
             expected = {
                 "pre-commit": {"agents-size", "editorconfig"},
                 "commit-msg": {"commit-message", "commit-message-quality"},
-                "check": {"agents-size", "editorconfig", "license", "workflows", "shell", "npm-audit", "secret-scan", "sensitive-files"},
-                "pre-push": {"license", "workflows", "shell", "secret-scan", "sensitive-files"},
+                "check": {"agents-size", "editorconfig", "license", "workflows", "shell", "npm-audit", "secret-scan", "sensitive-files",
+                          "semantic-release"},
+                "pre-push": {"license", "workflows", "shell", "secret-scan", "sensitive-files", "semantic-release"},
                 "release-readiness": {"release-contract"},
                 "release-record": {"release-contract"},
                 "release-verify": {"release-contract"},

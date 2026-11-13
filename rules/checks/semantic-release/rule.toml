@@ -1,0 +1,13 @@
+id = "semantic-release"
+description = "Require the shared Semantic Release baseline in release.config.mjs and package.json"
+enabled = true
+blocking = true
+
+[check]
+command = "python3 @rule/check.py @context @param/tag_format"
+timeout_seconds = 60
+
+[parameters.tag_format]
+type = "string"
+required = true
+description = "Release tag format, normally v${version}; repositories with legacy tags may declare ${version}"

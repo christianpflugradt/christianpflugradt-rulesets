@@ -17,7 +17,49 @@ ref = "<FULL_REVIEWED_COMMIT_SHA>"
 [imports.rule_parameters.release-contract]
 ci_policy = ".please/release-ci.json"
 artifacts_policy = ".please/release-artifacts.json"
+
+[imports.rule_parameters.semantic-release]
+tag_format = "v${version}"
 ```
+
+## Semantic Release baseline
+
+The blocking `semantic-release` Check runs at `check` and `pre-push` (`HEAD`). It
+evaluates `release.config.mjs` with Node in an isolated directory, so the module must
+be self-contained, and reads `package.json` and `package-lock.json`. It does not
+inspect workflows or GitHub. Requirements:
+
+- `release.config.mjs` is the only configuration source: no `.releaserc*`, no other
+  `release.config.*` and no `release` key in `package.json`.
+- Only `branches`, `tagFormat`, `repositoryUrl` and `plugins` are set. `branches` is
+  `["main"]`. `tagFormat` equals the required `tag_format` parameter, normally
+  `v${version}`; a repository with legacy tags declares `${version}`. `repositoryUrl`
+  is optional.
+- Exactly four plugins in order: commit analyzer, release notes generator, a local
+  verification plugin (a plain `./path.mjs` that must exist) and
+  `@semantic-release/github`. Changelog, Git and npm plugins are therefore excluded.
+- Analyzer and notes generator use preset `conventionalcommits`, the shared revert
+  `parserOpts` and exactly the shared release levels and sections:
+
+| Commit type | Release | Notes section |
+| --- | --- | --- |
+| breaking | major | none of its own |
+| `feat` | minor | Features |
+| `fix`, `perf`, `revert` | patch | Bug Fixes, Performance Improvements, Reverts |
+| `chore`, `refactor`, `build`, `config` | patch | Maintenance, Code Refactoring, Build System, Configuration |
+| `build(release)` | none | hidden |
+| `ci`, `docs`, `style`, `test` | none | hidden |
+
+- The analyzer may be a local wrapper (`./path.mjs`, which must exist) around the
+  commit analyzer; it keeps the same options and may add its own.
+- `@semantic-release/github` sets `successComment`, `failComment` and `releasedLabels`
+  to `false`; `assets` and further options are the repository's own.
+- `package.json` sets `private: true` and `engines.node`, and pins `semantic-release`,
+  the three `@semantic-release/*` plugins and `conventional-changelog-conventionalcommits`
+  to exact versions that `package-lock.json` matches. Other fields and dependencies are
+  the repository's own.
+
+Local plugin contents, `assets`, versions and engine bounds are not standardized.
 
 The `release-contract` Check has two required file parameters: `ci_policy` uses
 the existing exact-source CI policy below; `artifacts_policy` uses this format:

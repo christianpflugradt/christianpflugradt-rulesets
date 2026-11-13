@@ -11,8 +11,8 @@
   hooks without requiring CI.
 - Open-source software adds approved licenses and aligned `ci.yml` quality
   assurance. A license check alone does not justify a separate ruleset.
-- Releasable open-source software adds aligned `release.yml` governance and
-  successful CI evidence for the release source SHA.
+- Releasable open-source software adds the Semantic Release baseline, aligned
+  `release.yml` governance and successful CI evidence for the release source SHA.
 - Separate domains sparingly. Security is an intentional independent bundle for
   visibility; discuss other new boundaries before introducing them.
 - These are additive policy responsibilities. README distinguishes implemented

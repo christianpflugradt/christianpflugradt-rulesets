@@ -9,7 +9,7 @@ that apply to a repository; each bundle adds to the others.
 | --- | --- | --- | --- |
 | `rulesets/repository-conventions` | Every repository, public or private, software or otherwise | `pre-commit`, `check`; `commit-msg` for commit rules | `AGENTS.md` size limit, EditorConfig baseline, Conventional Commit syntax and advisory header wording |
 | `rulesets/open-source-software` | Open-source software | `check`, `pre-push` | Approved license |
-| `rulesets/releasable-open-source-software` | Releasable open-source software | `release-readiness`, `release-record`, `release-verify` | Exact-source CI proof, candidate evidence and publication guards |
+| `rulesets/releasable-open-source-software` | Releasable open-source software | `check`, `pre-push`; `release-readiness`, `release-record`, `release-verify` for release evidence | Semantic Release baseline, exact-source CI proof, candidate evidence and publication guards |
 | `rulesets/security` | Repositories adopting the security policy | `check`, `pre-push` | Sensitive filenames and secret scanning |
 
 Repository conventions stay lightweight and work through Git hooks alone; `check` adds the same size limit and EditorConfig baseline to CI.
@@ -50,7 +50,7 @@ the Gemini and GitHub API operations themselves still require network access.
 | --- | --- | --- |
 | Repository conventions | `agents-size.max_tokens`; `commit-message.scopes_file`; independent `gemini-flash-lite` and `gemini-flash` provider imports | Python 3.9+, Git and `GEMINI_API_KEY` for the wording and `AGENTS.md` reviews |
 | Open-source software | `license.target`, usually `LICENSE` | Python 3.9+, Git, `actionlint`, ShellCheck, npm |
-| Releasable open-source software | Three declared custom points; `release-contract.ci_policy` and `.artifacts_policy` | Python 3.11+, Git, Node 24+ for the publication guard, GitHub Actions context and `GITHUB_TOKEN` |
+| Releasable open-source software | Three declared custom points; `semantic-release.tag_format`; `release-contract.ci_policy` and `.artifacts_policy` | Python 3.11+, Git, Node 24+ for the Semantic Release baseline and the publication guard, GitHub Actions context and `GITHUB_TOKEN` |
 | Security | No required parameters at its assigned points | Python 3.9+, Git, Gitleaks v8 with `gitleaks dir` |
 
 The wording and `AGENTS.md` quality Reviews are advisory; its FAIL and ERROR results remain visible without
