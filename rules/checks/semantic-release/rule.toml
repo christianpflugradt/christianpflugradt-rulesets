@@ -1,5 +1,6 @@
 id = "semantic-release"
-description = "Require the shared Semantic Release baseline in release.config.mjs and package.json"
+name = "Semantic Release"
+description = "Releases use the shared Semantic Release configuration"
 enabled = true
 blocking = true
 

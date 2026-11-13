@@ -1,5 +1,6 @@
 id = "mise-release"
-description = "Require the release task in mise.toml"
+name = "Mise release task"
+description = "mise.toml defines a release task"
 enabled = true
 blocking = true
 

@@ -1,5 +1,6 @@
 id = "mise-prepare"
-description = "Require the prepare task in mise.toml"
+name = "Mise prepare task"
+description = "mise.toml defines a prepare task"
 enabled = true
 blocking = true
 

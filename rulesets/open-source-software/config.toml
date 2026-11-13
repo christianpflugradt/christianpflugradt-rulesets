@@ -3,9 +3,9 @@ description = "Require an approved license and aligned quality assurance for ope
 run_at = ["pre-push", "check"]
 rules = [
   "rules/checks/license",
-  "rules/checks/workflows",
+  "rules/checks/workflow-syntax",
   "rules/checks/ci-workflow",
-  "rules/checks/shell",
+  "rules/checks/shell-scripts",
   "rules/checks/mise-prepare",
   { id = "rules/checks/npm-audit", run_at = ["check"] },
 ]

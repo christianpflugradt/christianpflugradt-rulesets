@@ -1,5 +1,6 @@
 id = "secret-scan"
-description = "Detect secrets in the current repository snapshot using Gitleaks"
+name = "Secret scan"
+description = "Files contain no secrets such as keys or tokens"
 enabled = true
 blocking = true
 

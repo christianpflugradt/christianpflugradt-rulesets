@@ -1,5 +1,6 @@
 id = "license"
-description = "Require a license matching an approved reference byte-for-byte"
+name = "License"
+description = "The repository has an approved license"
 
 [check]
 command = "python3 @source/scripts/file-reference.py @context @param/target @rule/licenses"
@@ -7,3 +8,4 @@ command = "python3 @source/scripts/file-reference.py @context @param/target @rul
 [parameters.target]
 type = "string"
 required = true
+description = "Path of the license file"

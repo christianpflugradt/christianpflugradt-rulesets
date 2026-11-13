@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-SHELL = ROOT / "rules/checks/shell/check.py"
+SHELL = ROOT / "rules/checks/shell-scripts/check.py"
 AUDIT = ROOT / "rules/checks/npm-audit/check.py"
 
 

@@ -1,5 +1,6 @@
 id = "npm-audit"
-description = "Audit npm high and critical advisories for every tracked package-lock.json"
+name = "npm dependency audit"
+description = "No npm dependency has a known high or critical vulnerability"
 blocking = true
 
 [check]

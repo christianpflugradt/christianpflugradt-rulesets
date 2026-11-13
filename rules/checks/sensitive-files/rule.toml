@@ -1,5 +1,6 @@
 id = "sensitive-files"
-description = "Reject environment and Terraform state files in the current snapshot"
+name = "Sensitive files"
+description = "No environment or Terraform state files are committed"
 enabled = true
 blocking = true
 

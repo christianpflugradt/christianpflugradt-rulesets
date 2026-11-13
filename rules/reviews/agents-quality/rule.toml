@@ -1,6 +1,6 @@
 id = "agents-quality"
 name = "AGENTS.md quality"
-description = "Evaluate actionable coding-agent guidance in AGENTS.md against a governance rubric"
+description = "AGENTS.md gives coding agents clear, actionable guidance"
 blocking = false
 
 [review]

@@ -1,5 +1,6 @@
 id = "mise-baseline"
-description = "Require the Please Behave governor in mise.toml [tools] and the format and verify tasks"
+name = "Mise baseline"
+description = "mise.toml pins the Please Behave version and defines the format and verify tasks"
 enabled = true
 blocking = true
 

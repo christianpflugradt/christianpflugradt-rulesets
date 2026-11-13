@@ -1,5 +1,6 @@
 id = "editorconfig"
-description = "Require a root .editorconfig that states the shared baseline"
+name = "EditorConfig"
+description = "A root .editorconfig defines the shared formatting baseline"
 enabled = true
 blocking = true
 
