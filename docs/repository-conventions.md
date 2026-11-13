@@ -56,9 +56,12 @@ description = "Run the deterministic Please Behave checks and stop at the first 
 run = "please run --at pre-push --checks-only --fail-fast"
 ```
 
-- `format` rewrites every formatted file type of the repository. A repository without a
-  formatter may print a not-implemented message instead of leaving the task out. Splitting it
-  into per-language tasks is the repository's own choice.
+- `format` rewrites every formatted file type of the repository. It is a convenience for
+  developers and agents; Please Behave never runs it. Enforcement belongs to the repository's own
+  rules, ideally one per formatter in check mode (for example `cargo fmt --check`,
+  `ruff format --check`, `shfmt -d`), so they run in parallel on their own files. A repository
+  without a formatter may print a not-implemented message instead of leaving the task out.
+  Splitting it into per-language tasks is the repository's own choice.
 - `verify` is the quick diagnosis: it skips Reviews and stops at the first blocker, which the
   complete `pre-push` hook and `check` do not. It never replaces them. The name avoids the
   `check` execution point, which does more.
