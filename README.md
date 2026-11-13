@@ -67,18 +67,14 @@ See complete import examples, parameters, evidence boundaries and limitations:
 
 ## Validation
 
-Tests use temporary local Git repositories and mocked HTTP. They must never call
-live providers or network APIs. Use a published Please Behave binary for import and
-managed-hook integration, independently of any CLI candidate under development.
+Tests cover individual rule scripts only. They use temporary local Git repositories
+and mocked HTTP and must never call live providers or network APIs.
 
 ```sh
 python3 tests/test_commit_message.py
 python3 -m unittest discover -s tests -v
-python3 tests/test_commit_message.py --please /path/to/published/please
 ```
 
-`PLEASE_EXECUTABLE` selects the Please Behave binary for the Python
-integration tests. Optional integrations report skips when tools are missing;
-skips do not demonstrate successful integration. The repository currently has no
-configured validation hooks or CI workflow. See [AGENTS.md](AGENTS.md) for change
+Skipped tests do not demonstrate successful validation. The repository currently
+has no configured validation hooks or CI workflow. See [AGENTS.md](AGENTS.md) for change
 boundaries and agent guidance.

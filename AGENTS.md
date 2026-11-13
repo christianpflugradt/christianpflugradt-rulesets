@@ -61,10 +61,9 @@
 - Before moving public import paths, verify affected consumers use reviewed full
   commit pins. Old commits preserve their old layouts. Migrate consumers only
   when explicitly requested; do not add duplicate compatibility bundles.
-- Use published Please Behave for offline import/hook integration, with mocked
-  network responses and synthetic credentials. Never call paid/live providers
-  or network APIs from tests. Test affected behavior only where a Rule has its own
-  tests; configured Git hooks remain authoritative gates. Missing tools or skipped
-  tests are validation limitations.
+- Tests use mocked network responses and synthetic credentials. Never call
+  paid/live providers or network APIs from tests. Test affected behavior only where
+  a Rule has its own tests; configured Git hooks remain authoritative gates. Missing
+  tools or skipped tests are validation limitations.
 - Work on `main`; commit and push each coherent authorized change. Preserve
   unrelated edits, avoid history rewrites, and stop after a successful push.

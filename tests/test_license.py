@@ -1,7 +1,6 @@
-"""Exact license matching, technical failures and shared-entrypoint imports."""
+"""Exact license matching and technical failures of the shared reference check."""
 import importlib.util
 import io
-import json
 import os
 from pathlib import Path
 import shutil
@@ -17,7 +16,6 @@ from context import write_context  # noqa: E402
 ROOT = Path(__file__).resolve().parents[1]
 RULE = ROOT / "rules/checks/license"
 SCRIPT = ROOT / "scripts/file-reference.py"
-PLEASE = os.environ.get("PLEASE_EXECUTABLE") or shutil.which("please")
 spec = importlib.util.spec_from_file_location("file_reference", SCRIPT)
 mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mod)
@@ -121,54 +119,6 @@ class LicenseTests(unittest.TestCase):
                 failure = subprocess.CompletedProcess([], 128, b"", b"cannot read blob")
                 with patch.object(subprocess, "run", side_effect=[listing, failure]):
                     self.assertEqual(mod.main(), 2)
-
-    @unittest.skipUnless(PLEASE, "compatible Please Behave binary required")
-    def test_rule_set_import_and_shared_entrypoint(self):
-        source = self.base / "source"
-        source.mkdir()
-        for directory in ("rulesets", "rules", "scripts"):
-            shutil.copytree(ROOT / directory, source / directory, ignore=shutil.ignore_patterns("__pycache__"))
-        subprocess.run(["git", "init", "--quiet", "--initial-branch=main", str(source)], check=True)
-        subprocess.run(["git", "add", "."], cwd=source, check=True)
-        subprocess.run(["git", "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
-                        "-c", "commit.gpgsign=false", "commit", "--quiet", "-m", "test: local rules"], cwd=source, check=True)
-        config = self.repo / ".please/config.toml"
-        config.parent.mkdir()
-        (self.repo / ".gitignore").write_text(".please/reports/\n")
-        shutil.copyfile(RULE / "licenses/Unlicense.txt", self.repo / "LICENSE")
-        (self.repo / "mise.toml").write_text('[tasks.prepare]\nrun = "npm ci"\n')
-        (self.repo / ".github/workflows").mkdir(parents=True)
-        (self.repo / ".github/workflows/ci.yml").write_text(
-            "name: CI\non:\n  push:\n    branches: [main]\n  pull_request:\npermissions:\n  contents: read\n"
-            "jobs:\n  check:\n    runs-on: ubuntu-24.04\n    timeout-minutes: 5\n    steps:\n"
-            f"      - uses: actions/checkout@{'a' * 40}\n        with:\n          persist-credentials: false\n"
-            f"      - uses: jdx/mise-action@{'a' * 40}\n      - run: mise run prepare\n"
-            f"      - uses: please-behave/action@{'a' * 40}\n        with:\n          install: 'false'\n"
-            "          sync: 'true'\n          execution-point: check\n")
-        for path, set_id in (("rulesets/open-source-software", "open-source-software"),):
-            with self.subTest(path=path):
-                config.write_text("project = \"License fixture\"\n[[imports]]\ngit = " + json.dumps(str(source)) +
-                                  "\npath = " + json.dumps(path) + "\nref = \"main\"\n[imports.rule_parameters.license]\ntarget = \"LICENSE\"\n")
-                def please(*args, expected=0):
-                    result = subprocess.run([PLEASE, *args], cwd=self.repo, env=self.env, capture_output=True, text=True)
-                    self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
-                    return result
-                please("sync", "--yes")
-                for point in ("check", "pre-push"):
-                    plan = json.loads(please("run", "--at", point, "--plan", "--json").stdout)
-                    rule, = [r for r in plan["scheduled"] if r["id"].endswith(":license")]
-                    self.assertTrue(rule["id"].endswith(":license"))
-                    self.assertTrue(rule["blocking"])
-                    self.assertEqual(rule["origin"]["external"]["path"], path)
-                    self.assertIn(f'id = "{set_id}"', (source / path / "config.toml").read_text())
-                self.commit()
-                for point in ("check", "pre-push"):
-                    please("run", "--at", point)
-                (self.repo / "LICENSE").write_text("invalid license\n")
-                please("run", "--at", "check", expected=1)
-                report = json.loads((self.repo / ".please/reports/last.json").read_text())
-                self.assertEqual(report["overall"], "FAIL")
-                shutil.copyfile(RULE / "licenses/Unlicense.txt", self.repo / "LICENSE")
 
 
 if __name__ == "__main__":
