@@ -25,7 +25,7 @@ rules/checks/<rule>/                       # rule.toml, implementation and resou
 rules/reviews/<rule>/                      # rule.toml, prompt and resources
 providers/<provider>/                      # provider.toml and adapter
 scripts/                                  # Reusable helpers and integration scripts
-tests/                                    # Offline code and import integration tests
+tests/                                    # Offline unit tests of individual rule scripts
 docs/                                     # Policy usage and compatibility details
 ```
 
@@ -77,7 +77,7 @@ python3 -m unittest discover -s tests -v
 python3 tests/test_commit_message.py --please /path/to/published/please
 ```
 
-`PLEASE_EXECUTABLE` and `GITLEAKS_EXECUTABLE` select tool paths for the Python
+`PLEASE_EXECUTABLE` selects the Please Behave binary for the Python
 integration tests. Optional integrations report skips when tools are missing;
 skips do not demonstrate successful integration. The repository currently has no
 configured validation hooks or CI workflow. See [AGENTS.md](AGENTS.md) for change

@@ -38,8 +38,16 @@
 - Keep Rule-specific code, prompts and reference data with `rule.toml` under
   `rules/checks/` or `rules/reviews/`. Put reusable helpers in `scripts/` and
   provider definitions and adapters together under `providers/<provider>/`.
-- Keep offline tests in `tests/`, the catalog and setup in README, and detailed
-  usage in `docs/`. Update definitions, tests and documentation together.
+- Keep the catalog and setup in README and detailed usage in `docs/`. Update
+  definitions, tests and documentation together.
+- Add offline unit tests in `tests/` only for a Rule script complex enough to justify
+  them, and keep each suite to that one Rule. Do not write tests that span several
+  Rules or rulesets, import integrations, or definitions, names and descriptions;
+  validate those through review.
+- Keep every Rule small enough for a maintainer to read and change in one sitting.
+  Do not add speculative options, layers or configuration to a Rule; if a script
+  grows complex, simplify the Rule or narrow what it checks before adding more code
+  or tests, and discuss unavoidable complexity first.
 - Commands run in the consumer root. Resolve imported resources explicitly;
   never modify the immutable source cache or install dependencies during checks.
 - Preserve PASS/FAIL/ERROR distinctions. FAIL (exit 1) is only a verdict about the
@@ -55,7 +63,8 @@
   when explicitly requested; do not add duplicate compatibility bundles.
 - Use published Please Behave for offline import/hook integration, with mocked
   network responses and synthetic credentials. Never call paid/live providers
-  or network APIs from tests. Test affected behavior; configured Git hooks remain
-  authoritative gates. Missing tools or skipped tests are validation limitations.
+  or network APIs from tests. Test affected behavior only where a Rule has its own
+  tests; configured Git hooks remain authoritative gates. Missing tools or skipped
+  tests are validation limitations.
 - Work on `main`; commit and push each coherent authorized change. Preserve
   unrelated edits, avoid history rewrites, and stop after a successful push.
