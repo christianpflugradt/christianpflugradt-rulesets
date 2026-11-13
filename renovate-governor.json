@@ -37,6 +37,7 @@
       "platformAutomerge": false,
       "ignoreTests": false,
       "minimumReleaseAge": "0 days",
+      "minimumReleaseAgeBehaviour": "timestamp-optional",
       "semanticCommitType": "chore",
       "semanticCommitScope": "deps"
     }

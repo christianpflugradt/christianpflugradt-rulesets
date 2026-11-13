@@ -32,6 +32,10 @@ The same preset tracks the full-commit `ref` of every `[[imports]]` and
 `[[provider_imports]]` entry in `.please/config.toml` whose `git` is this
 repository. Renovate follows `main` and opens one PR that moves all such pins to
 the latest commit, then auto-merges it after checks pass, without a cooldown.
+Git revisions carry no release timestamp, so the preset also sets
+`minimumReleaseAgeBehaviour` to `timestamp-optional` for these pins. A project-wide
+`timestamp-required` setting then does not hold them back; third-party dependencies keep
+their own cooldowns.
 Checks run `please sync` against the new revision, so a removed path or a Rule that
 needs a newer governor fails the PR instead of merging. Such a PR stays open and is
 rebased once the governor update has merged. `git` and `ref` may appear in either
