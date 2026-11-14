@@ -17,7 +17,11 @@ RETRYABLE = (429, 500, 502, 503, 504)
 
 
 class ProviderError(ValueError):
-    """A diagnostic that never includes credentials, prompts or raw API output."""
+    """A technical failure; `detail` is the original error text, which Please retains unmasked."""
+
+    def __init__(self, message, detail=""):
+        super().__init__(message)
+        self.detail = detail
 
 
 class NoRedirect(HTTPRedirectHandler):
@@ -60,12 +64,19 @@ def unwrap(raw):
         raise ProviderError("Gemini returned an invalid or incomplete structured response.") from None
 
 
-def key_rejected(error):
-    """Whether Google names the API key as the problem; only its machine-readable reason is read."""
+def original(error):
+    """The error body Google sent, bounded; it is the evidence for diagnosing a rejected request."""
     try:
-        details = json.loads(error.read(LIMIT))["error"]["details"]
+        return error.read(LIMIT).decode("utf-8", "replace").strip()
+    except (OSError, ValueError):
+        return ""
+
+
+def key_invalid(body):
+    try:
+        details = json.loads(body)["error"]["details"]
         return any(isinstance(item, dict) and item.get("reason") == "API_KEY_INVALID" for item in details)
-    except (OSError, ValueError, KeyError, TypeError):
+    except (ValueError, KeyError, TypeError):
         return False
 
 
@@ -82,6 +93,7 @@ def run(prompt, model, schema):
         data=payload, headers={"Content-Type": "application/json", "x-goog-api-key": key}, method="POST")
     opener = build_opener(NoRedirect())
     for attempt in range(3):
+        detail = ""
         try:
             with opener.open(request, timeout=20) as response:
                 if not 200 <= response.status < 300:
@@ -89,12 +101,12 @@ def run(prompt, model, schema):
                 return unwrap(response.read(LIMIT + 1))
         except HTTPError as error:
             status = error.code
-            rejected = status == 400 and key_rejected(error)
+            detail = original(error)
             error.close()
-            if rejected:
-                raise ProviderError("Gemini rejected GEMINI_API_KEY as invalid (API_KEY_INVALID).") from None
+            if status == 400 and key_invalid(detail):
+                raise ProviderError("Gemini rejected GEMINI_API_KEY as invalid (API_KEY_INVALID).", detail) from None
             if status not in RETRYABLE:
-                raise ProviderError(f"Gemini returned HTTP {status}.") from None
+                raise ProviderError(f"Gemini returned HTTP {status}.", detail) from None
             diagnostic = f"Gemini returned HTTP {status}"
         except ProviderError:
             raise
@@ -106,12 +118,13 @@ def run(prompt, model, schema):
                 or getattr(reason, "errno", None) in (errno.ECONNRESET, errno.ECONNREFUSED, errno.ENETUNREACH, errno.EHOSTUNREACH)
             )
             if not transient:
-                raise ProviderError("Gemini connection failed; no retry.") from None
+                raise ProviderError("Gemini connection failed; no retry.", repr(error)) from None
             diagnostic = "Gemini connection failed"
-        except ValueError:
-            raise ProviderError("Gemini request was invalid; no retry.") from None
+            detail = repr(error)
+        except ValueError as error:
+            raise ProviderError("Gemini request was invalid; no retry.", repr(error)) from None
         if attempt == 2:
-            raise ProviderError(f"{diagnostic}; exhausted 3 attempts.")
+            raise ProviderError(f"{diagnostic}; exhausted 3 attempts.", detail)
         time.sleep(DELAYS[attempt])
 
 
@@ -130,21 +143,23 @@ def review(request):
         raise ProviderError("Every review in a Gemini batch must select the same explicit model.")
     if any(not isinstance(item.get("id"), str) or not item["id"] for item in reviews):
         raise ProviderError("Invalid adapter review identity.")
-    try:
-        verdicts = run(request["prompt"], models[0], request["response_schema"])
-        return {"protocol_version": 1, "reviews": verdicts}
-    except ProviderError as error:
-        return {"protocol_version": 1, "reviews": [
-            {"id": item["id"], "status": "ERROR", "reason": str(error), "findings": []} for item in reviews
-        ]}
+    return {"protocol_version": 1, "reviews": run(request["prompt"], models[0], request["response_schema"])}
+
+
+def fail(message, detail=""):
+    """A technical failure is exit status 2 with the original error on stderr; Please reports ERROR."""
+    sys.stderr.write(f"{message}\n{detail}".strip() + "\n")
+    sys.exit(2)
 
 
 def main():
     try:
         request = json.load(sys.stdin, object_pairs_hook=unique_object)
         sys.stdout.write(json.dumps(review(request)))
-    except (OSError, ValueError, KeyError, TypeError, AttributeError):
-        sys.exit("Gemini adapter failed; invalid input or raw output suppressed.")
+    except ProviderError as error:
+        fail(str(error), error.detail)
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+        fail("Gemini adapter failed on invalid input.", repr(error))
 
 
 if __name__ == "__main__":

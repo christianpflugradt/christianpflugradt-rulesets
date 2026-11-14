@@ -213,8 +213,9 @@ Authentication errors and invalid, blocked, truncated or malformed responses are
 not retried. A key that Google reports as invalid (HTTP 400, reason `API_KEY_INVALID`)
 is named in the ERROR reason. The provider deadline is 70 seconds for the whole process.
 Redirects are rejected so the key is never forwarded to another endpoint. Non-successful HTTP
-responses, blocked/truncated candidates, invalid/duplicate JSON and responses over 64 KiB produce ERROR.
-No raw API error text, credentials or prompts are printed. Authentication,
+responses, blocked/truncated candidates, invalid/duplicate JSON and responses over 64 KiB produce ERROR:
+the adapter writes the failure and Google's original error text to stderr, unmasked, and exits 2.
+Please retains that output with the ERROR result (`please status --details`). Authentication,
 network and availability failures remain visible as Review ERROR. The Review
 is advisory: wording FAIL and provider ERROR do not prevent a commit, while
 deterministic syntax failures still block. Model judgment quality is not claimed

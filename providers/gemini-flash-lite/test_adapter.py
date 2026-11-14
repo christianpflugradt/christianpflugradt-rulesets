@@ -4,6 +4,7 @@ import importlib.util
 import io
 import json
 import os
+import sys
 from pathlib import Path
 import unittest
 from unittest.mock import MagicMock, patch
@@ -62,23 +63,26 @@ class GeminiTests(unittest.TestCase):
 
     def test_missing_credentials_http_errors_timeouts_and_redirects_never_pass(self):
         with patch.dict(os.environ, {}, clear=True), patch.object(gemini, "build_opener") as opener:
-            result = gemini.review(self.request)
+            with self.assertRaisesRegex(gemini.ProviderError, "GEMINI_API_KEY"):
+                gemini.review(self.request)
             opener.assert_not_called()
-            self.assertEqual(result["reviews"][0]["status"], "ERROR")
-        for error in [HTTPError("https://example.invalid", code, "private-error-body", {}, io.BytesIO(b"private-response"))
+        for error in [HTTPError("https://example.invalid", code, "reason", {}, io.BytesIO(b"original-body"))
                       for code in (302, 401, 429, 500)]:
             opener = MagicMock()
             opener.open.side_effect = error
             with patch.dict(os.environ, GEMINI_API_KEY="synthetic-key"), patch.object(gemini, "build_opener", return_value=opener):
-                result = gemini.review(self.request)
-            self.assertEqual(result["reviews"][0]["status"], "ERROR")
-            self.assertNotIn("private", json.dumps(result))
+                with self.assertRaises(gemini.ProviderError) as raised:
+                    gemini.review(self.request)
+            if error.code not in gemini.RETRYABLE:
+                self.assertEqual(raised.exception.detail, "original-body")
             self.assertEqual(opener.open.call_count, 3 if error.code in gemini.RETRYABLE else 1)
-        for error in (TimeoutError("private details"), URLError("private details")):
+        for error in (TimeoutError("original details"), URLError("original details")):
             opener = MagicMock()
             opener.open.side_effect = error
             with patch.dict(os.environ, GEMINI_API_KEY="synthetic-key"), patch.object(gemini, "build_opener", return_value=opener):
-                self.assertEqual(gemini.review(self.request)["reviews"][0]["status"], "ERROR")
+                with self.assertRaises(gemini.ProviderError) as raised:
+                    gemini.review(self.request)
+            self.assertIn("original details", raised.exception.detail)
         self.assertIsNone(gemini.NoRedirect().redirect_request(None, None, 302, "", {}, "https://example.invalid"))
 
     def test_malformed_blocked_truncated_duplicate_and_oversized_responses_are_errors(self):
@@ -96,18 +100,32 @@ class GeminiTests(unittest.TestCase):
         for raw in malformed:
             with self.subTest(raw=raw[:60]), patch.dict(os.environ, GEMINI_API_KEY="synthetic-key"), \
                     patch.object(gemini, "build_opener", return_value=self.response(raw)):
-                result = gemini.review(self.request)
-                self.assertEqual(result["reviews"][0]["status"], "ERROR")
-                self.assertEqual(result["reviews"][0]["findings"], [])
+                with self.assertRaises(gemini.ProviderError):
+                    gemini.review(self.request)
 
     def test_rejected_api_key_is_named_without_retry(self):
         body = json.dumps({"error": {"code": 400, "status": "INVALID_ARGUMENT", "details": [{"reason": "API_KEY_INVALID"}]}}).encode()
         opener = MagicMock()
         opener.open.side_effect = HTTPError("https://example.invalid", 400, "private", {}, io.BytesIO(body))
         with patch.dict(os.environ, GEMINI_API_KEY="synthetic-key"), patch.object(gemini, "build_opener", return_value=opener):
-            result = gemini.review(self.request)["reviews"][0]
-        self.assertEqual((result["status"], result["reason"]), ("ERROR", "Gemini rejected GEMINI_API_KEY as invalid (API_KEY_INVALID)."))
+            with self.assertRaises(gemini.ProviderError) as raised:
+                gemini.review(self.request)
+        self.assertEqual(str(raised.exception), "Gemini rejected GEMINI_API_KEY as invalid (API_KEY_INVALID).")
+        self.assertEqual(raised.exception.detail, body.decode())
         self.assertEqual(opener.open.call_count, 1)
+
+    def test_a_technical_failure_exits_with_status_2_and_the_original_error_on_stderr(self):
+        body = '{"error": {"code": 400, "message": "Original Google message", "status": "INVALID_ARGUMENT"}}'
+        opener = MagicMock()
+        opener.open.side_effect = HTTPError("https://example.invalid", 400, "reason", {}, io.BytesIO(body.encode()))
+        stderr = io.StringIO()
+        with patch.dict(os.environ, GEMINI_API_KEY="synthetic-key"), patch.object(gemini, "build_opener", return_value=opener), \
+                patch.object(sys, "stdin", io.StringIO(json.dumps(self.request))), patch.object(sys, "stderr", stderr), \
+                self.assertRaises(SystemExit) as exited:
+            gemini.main()
+        self.assertEqual(exited.exception.code, 2)
+        self.assertEqual(stderr.getvalue(), f"Gemini returned HTTP 400.\n{body}\n")
+        self.assertNotIn("synthetic-key", stderr.getvalue())
 
     def test_transient_failure_recovers_with_short_backoff_and_no_extra_calls(self):
         response = MagicMock()

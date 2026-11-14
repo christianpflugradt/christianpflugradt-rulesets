@@ -3,6 +3,7 @@ import importlib.util
 import io
 import json
 import os
+import sys
 from pathlib import Path
 import unittest
 from unittest.mock import MagicMock, patch
@@ -70,33 +71,48 @@ class FlashTests(unittest.TestCase):
 
     def test_stops_after_five_attempts_with_an_error_result(self):
         opener = self.opener(*[http_error(503)] * 5)
-        result = self.review(opener)
+        with self.assertRaisesRegex(gemini.ProviderError, "exhausted 5 attempts"):
+            self.review(opener)
         self.assertEqual(len(opener.calls), 5)
         self.assertEqual([call.args[0] for call in self.sleep.call_args_list], [10, 20, 30, 45])
-        self.assertEqual(result["reviews"][0]["status"], "ERROR")
-        self.assertIn("exhausted 5 attempts", result["reviews"][0]["reason"])
 
     def test_nonretryable_status_fails_without_retry(self):
-        opener = self.opener(http_error(400))
-        self.assertEqual(self.review(opener)["reviews"][0]["status"], "ERROR")
+        opener = self.opener(HTTPError("https://example.invalid", 400, "reason", {}, io.BytesIO(b"original-body")))
+        with self.assertRaises(gemini.ProviderError) as raised:
+            self.review(opener)
+        self.assertEqual((str(raised.exception), raised.exception.detail), ("Gemini returned HTTP 400.", "original-body"))
         self.assertEqual(len(opener.calls), 1)
         self.sleep.assert_not_called()
 
     def test_rejected_api_key_is_named_without_retry(self):
         body = json.dumps({"error": {"code": 400, "status": "INVALID_ARGUMENT", "details": [{"reason": "API_KEY_INVALID"}]}}).encode()
         opener = self.opener(HTTPError("https://example.invalid", 400, "private", {}, io.BytesIO(body)))
-        result = self.review(opener)["reviews"][0]
-        self.assertEqual((result["status"], result["reason"]), ("ERROR", "Gemini rejected GEMINI_API_KEY as invalid (API_KEY_INVALID)."))
+        with self.assertRaises(gemini.ProviderError) as raised:
+            self.review(opener)
+        self.assertEqual(str(raised.exception), "Gemini rejected GEMINI_API_KEY as invalid (API_KEY_INVALID).")
+        self.assertEqual(raised.exception.detail, body.decode())
         self.assertEqual(len(opener.calls), 1)
+
+    def test_a_technical_failure_exits_with_status_2_and_the_original_error_on_stderr(self):
+        body = '{"error": {"code": 400, "message": "Original Google message", "status": "INVALID_ARGUMENT"}}'
+        opener = self.opener(HTTPError("https://example.invalid", 400, "reason", {}, io.BytesIO(body.encode())))
+        stderr = io.StringIO()
+        with patch.object(gemini, "build_opener", return_value=opener), patch.object(sys, "stdin", io.StringIO(json.dumps(self.request))), \
+                patch.object(sys, "stderr", stderr), self.assertRaises(SystemExit) as exited:
+            gemini.main()
+        self.assertEqual(exited.exception.code, 2)
+        self.assertEqual(stderr.getvalue(), f"Gemini returned HTTP 400.\n{body}\n")
 
     def test_malformed_response_is_an_error_not_a_retry(self):
         opener = self.opener(b"{}")
-        self.assertEqual(self.review(opener)["reviews"][0]["status"], "ERROR")
+        with self.assertRaises(gemini.ProviderError):
+            self.review(opener)
         self.assertEqual(len(opener.calls), 1)
 
     def test_missing_key_and_bad_model_settings_are_errors(self):
         with patch.dict(os.environ, clear=True):
-            self.assertIn("GEMINI_API_KEY", self.review(self.opener())["reviews"][0]["reason"])
+            with self.assertRaisesRegex(gemini.ProviderError, "GEMINI_API_KEY"):
+                self.review(self.opener())
         for models in ("", "model-a,", None):
             request = json.loads(json.dumps(self.request))
             request["reviews"][0]["parameters"] = {} if models is None else {"models": models}
