@@ -3,5 +3,6 @@ name = "Workflow syntax"
 description = "GitHub workflow files have valid syntax and expressions"
 
 [check]
-command = "actionlint"
+# Pinned GitHub runner images are updated by Renovate ahead of actionlint's label list.
+command = "actionlint -ignore 'label \"(ubuntu|macos|windows)-[0-9][^\"]*\" is unknown'"
 timeout_seconds = 120
