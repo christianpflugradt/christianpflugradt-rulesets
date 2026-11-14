@@ -2,7 +2,6 @@ id = "commit-message"
 name = "Commit message format"
 description = "Commit headers follow Conventional Commits and use an allowed scope"
 enabled = true
-blocking = true
 
 [parameters.scopes_file]
 type = "file"

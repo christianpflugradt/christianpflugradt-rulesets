@@ -2,7 +2,6 @@ id = "mise-prepare"
 name = "Mise prepare task"
 description = "mise.toml defines a prepare task"
 enabled = true
-blocking = true
 
 [check]
 command = "python3 @rule/check.py @context"

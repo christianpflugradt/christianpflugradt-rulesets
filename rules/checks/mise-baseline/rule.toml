@@ -2,7 +2,6 @@ id = "mise-baseline"
 name = "Mise baseline"
 description = "mise.toml pins the Please Behave version and defines the format and verify tasks"
 enabled = true
-blocking = true
 
 [check]
 command = "python3 @rule/check.py @context"

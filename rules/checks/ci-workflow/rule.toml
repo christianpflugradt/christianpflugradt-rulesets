@@ -2,7 +2,6 @@ id = "ci-workflow"
 name = "CI workflow"
 description = "The CI workflow follows the shared standard structure"
 enabled = true
-blocking = true
 
 [check]
 command = "python3 @rule/check.py @context"

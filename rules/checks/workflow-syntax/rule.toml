@@ -1,7 +1,6 @@
 id = "workflow-syntax"
 name = "Workflow syntax"
 description = "GitHub workflow files have valid syntax and expressions"
-blocking = true
 
 [check]
 command = "actionlint"

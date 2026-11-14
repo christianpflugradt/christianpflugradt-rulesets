@@ -2,7 +2,6 @@ id = "agents-size"
 name = "AGENTS.md size"
 description = "AGENTS.md stays within its size limit"
 enabled = true
-blocking = true
 
 [check]
 command = "python3 @rule/check.py @context @param/max_tokens"

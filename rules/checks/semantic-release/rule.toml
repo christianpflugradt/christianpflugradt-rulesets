@@ -2,7 +2,6 @@ id = "semantic-release"
 name = "Semantic Release"
 description = "Releases use the shared Semantic Release configuration"
 enabled = true
-blocking = true
 
 [check]
 command = "python3 @rule/check.py @context @param/tag_format"

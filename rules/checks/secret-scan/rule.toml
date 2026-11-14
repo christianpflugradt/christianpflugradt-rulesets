@@ -2,7 +2,6 @@ id = "secret-scan"
 name = "Secret scan"
 description = "Files contain no secrets such as keys or tokens"
 enabled = true
-blocking = true
 
 [check]
 command = "python3 @rule/check.py @context"

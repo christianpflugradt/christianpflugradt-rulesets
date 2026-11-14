@@ -2,7 +2,6 @@ id = "release-workflow"
 name = "Release workflow"
 description = "The Release workflow follows the shared standard structure"
 enabled = true
-blocking = true
 
 [check]
 command = "python3 @rule/check.py @context"

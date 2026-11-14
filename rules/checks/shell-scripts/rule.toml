@@ -1,7 +1,6 @@
 id = "shell-scripts"
 name = "Shell scripts"
 description = "Shell scripts are free of ShellCheck findings"
-blocking = true
 
 [check]
 command = "python3 @rule/check.py"

@@ -1,7 +1,6 @@
 id = "npm-audit"
 name = "npm dependency audit"
 description = "No npm dependency has a known high or critical vulnerability"
-blocking = true
 
 [check]
 command = "python3 @rule/check.py"

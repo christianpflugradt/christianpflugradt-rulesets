@@ -2,7 +2,6 @@ id = "sensitive-files"
 name = "Sensitive files"
 description = "No environment or Terraform state files are committed"
 enabled = true
-blocking = true
 
 [check]
 command = "python3 @rule/check.py @context"
