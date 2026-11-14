@@ -100,6 +100,15 @@ class GeminiTests(unittest.TestCase):
                 self.assertEqual(result["reviews"][0]["status"], "ERROR")
                 self.assertEqual(result["reviews"][0]["findings"], [])
 
+    def test_rejected_api_key_is_named_without_retry(self):
+        body = json.dumps({"error": {"code": 400, "status": "INVALID_ARGUMENT", "details": [{"reason": "API_KEY_INVALID"}]}}).encode()
+        opener = MagicMock()
+        opener.open.side_effect = HTTPError("https://example.invalid", 400, "private", {}, io.BytesIO(body))
+        with patch.dict(os.environ, GEMINI_API_KEY="synthetic-key"), patch.object(gemini, "build_opener", return_value=opener):
+            result = gemini.review(self.request)["reviews"][0]
+        self.assertEqual((result["status"], result["reason"]), ("ERROR", "Gemini rejected GEMINI_API_KEY as invalid (API_KEY_INVALID)."))
+        self.assertEqual(opener.open.call_count, 1)
+
     def test_transient_failure_recovers_with_short_backoff_and_no_extra_calls(self):
         response = MagicMock()
         response.status = 200

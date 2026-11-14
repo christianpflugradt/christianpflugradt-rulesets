@@ -210,7 +210,8 @@ Schema (`responseJsonSchema`). It has a 20-second HTTP timeout, a 2048-token out
 limit and no fallback model. Transient connection failures/timeouts and HTTP
 429/500/502/503/504 retry up to three total attempts, waiting 1 then 3 seconds.
 Authentication errors and invalid, blocked, truncated or malformed responses are
-not retried. The provider deadline is 70 seconds for the whole process.
+not retried. A key that Google reports as invalid (HTTP 400, reason `API_KEY_INVALID`)
+is named in the ERROR reason. The provider deadline is 70 seconds for the whole process.
 Redirects are rejected so the key is never forwarded to another endpoint. Non-successful HTTP
 responses, blocked/truncated candidates, invalid/duplicate JSON and responses over 64 KiB produce ERROR.
 No raw API error text, credentials or prompts are printed. Authentication,

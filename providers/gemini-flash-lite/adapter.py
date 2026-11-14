@@ -60,6 +60,15 @@ def unwrap(raw):
         raise ProviderError("Gemini returned an invalid or incomplete structured response.") from None
 
 
+def key_rejected(error):
+    """Whether Google names the API key as the problem; only its machine-readable reason is read."""
+    try:
+        details = json.loads(error.read(LIMIT))["error"]["details"]
+        return any(isinstance(item, dict) and item.get("reason") == "API_KEY_INVALID" for item in details)
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
+
+
 def run(prompt, model, schema):
     key = os.environ.get("GEMINI_API_KEY")
     if not key:
@@ -80,7 +89,10 @@ def run(prompt, model, schema):
                 return unwrap(response.read(LIMIT + 1))
         except HTTPError as error:
             status = error.code
+            rejected = status == 400 and key_rejected(error)
             error.close()
+            if rejected:
+                raise ProviderError("Gemini rejected GEMINI_API_KEY as invalid (API_KEY_INVALID).") from None
             if status not in RETRYABLE:
                 raise ProviderError(f"Gemini returned HTTP {status}.") from None
             diagnostic = f"Gemini returned HTTP {status}"

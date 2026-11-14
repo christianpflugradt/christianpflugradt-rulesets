@@ -82,6 +82,13 @@ class FlashTests(unittest.TestCase):
         self.assertEqual(len(opener.calls), 1)
         self.sleep.assert_not_called()
 
+    def test_rejected_api_key_is_named_without_retry(self):
+        body = json.dumps({"error": {"code": 400, "status": "INVALID_ARGUMENT", "details": [{"reason": "API_KEY_INVALID"}]}}).encode()
+        opener = self.opener(HTTPError("https://example.invalid", 400, "private", {}, io.BytesIO(body)))
+        result = self.review(opener)["reviews"][0]
+        self.assertEqual((result["status"], result["reason"]), ("ERROR", "Gemini rejected GEMINI_API_KEY as invalid (API_KEY_INVALID)."))
+        self.assertEqual(len(opener.calls), 1)
+
     def test_malformed_response_is_an_error_not_a_retry(self):
         opener = self.opener(b"{}")
         self.assertEqual(self.review(opener)["reviews"][0]["status"], "ERROR")
