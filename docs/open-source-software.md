@@ -34,8 +34,6 @@ ERROR (2).
 
 - `workflow-syntax` runs `actionlint` on the repository's GitHub workflows. It needs `actionlint` on
   `PATH` and a `.github/workflows` directory; issues return FAIL, and a missing tool ERROR.
-  Unknown runner image labels such as `ubuntu-26.04` are ignored, so pinned runner updates do not
-  fail the check before `actionlint` learns the label.
 - `shell-scripts` runs ShellCheck on every tracked `*.sh` file of the working tree, in any directory.
   Scripts whose shebang names zsh are skipped because ShellCheck cannot analyze them.
   Write portable POSIX `sh` (`#!/bin/sh`) where practical: ShellCheck then reports bashisms. Bash- or
